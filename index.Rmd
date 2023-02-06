@@ -35,10 +35,6 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 Placeholder text that explains the two dashboards contained in the tracker.
 
-Summary statistics. 
-
-For more information, see our [Frequently Asked Questions](./FAQ.html) and [Glossary](./glossary.html).
-
 ```{r}
 #| echo: false
 #| include: false
@@ -199,8 +195,8 @@ The inclusive recovery funds we track represent a subset of COVID-19 assistance 
 
 This project is a collaboration between [The Chicago Community Trust](https://www.cct.org/) and the [Urban Institute](https://www.urban.org/). It is supported by a grant from the Kresge Foundation through the [Shared Prosperity Partnership](http://www.sharedprosperitypartnership.org/).
 
-For more information about the dashboard, please contact [Aimee Ramirez](mailto:aramirez@cct.org) (The Chicago Community Trust) and [Karolina Ramos](mailto:kramos@urban.org) (Urban Institute).
+For more information, see our [Frequently Asked Questions](./FAQ.html) and [Glossary](./glossary.html).
 
-<br>
+Please contact [Aimee Ramirez](mailto:aramirez@cct.org) (The Chicago Community Trust) and [Karolina Ramos](mailto:kramos@urban.org) (Urban Institute) with questions.
 
 The code used to create this dashboard can be found on [GitHub](https://github.com/Chi-Trust/Recovery-Funds-Dashboard).
