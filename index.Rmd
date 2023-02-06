@@ -127,7 +127,28 @@ plot_funds_by_var <- function(data, fill_var, lab_text){
     theme(text = element_text(family = "Merriweather",
                               face = "plain",
                                  colour = "#000000",
-                                 size = 8.5,
+                                 size = 8,
+                                 hjust = 0.5,
+                                 vjust = 0.5,
+                                 angle = 0,
+                                 lineheight = 0.9,
+                                 margin = ggplot2::margin(),
+                                 debug = FALSE),
+          legend.position = "none",
+          axis.text.y = element_text(family = "Merriweather",
+                              face = "plain",
+                                 colour = "#000000",
+                                 size = 9,
+                                 hjust = 0.5,
+                                 vjust = 0.5,
+                                 angle = 0,
+                                 lineheight = 0.9,
+                                 margin = ggplot2::margin(),
+                                 debug = FALSE),
+          axis.text.x = element_text(family = "Merriweather",
+                              face = "plain",
+                                 colour = "#000000",
+                                 size = 9,
                                  hjust = 0.5,
                                  vjust = 0.5,
                                  angle = 0,
@@ -148,7 +169,7 @@ plot_funds_by_var <- function(data, fill_var, lab_text){
 
 ```{r}
 #| fig-width: 9
-#| fig-height: 6
+#| fig-height: 4
 #| fig-alt: "TBD"
 plot_funds_by_var(all_data, legislation, "Legislation")
 
@@ -158,8 +179,28 @@ plot_funds_by_var(all_data, legislation, "Legislation")
 
 ```{r}
 #| fig-width: 9
-#| fig-height: 6
+#| fig-height: 4
 #| fig-alt: "TBD"
 plot_funds_by_var(all_data, recipient_name, "Recipient")
 
 ```
+
+# About the Dashboard
+
+The inclusive recovery funds we track represent a subset of COVID-19 assistance provided by the federal government. The dashboard only reflects funds flowing directly from the federal government to the State of Illinois, Cook County, and the City of Chicago that can be used for inclusive recovery efforts that align with key priorities of The Chicago Community Trust: community investment, community safety, household investment, housing, and workforce development, which are all vital to narrowing the Chicago region's racial and ethnic wealth gap. It does not include funds provided by the federal government directly to public housing authorities, school districts, universities, or nongovernmental organizations, such as non-profits or private sector firms.
+
+[Download all the data used in the dashboard (.zip)](https://federal-funds-equity.s3.amazonaws.com/all_programs_total.zip)
+
+```{r, eval = FALSE}
+
+#data_out <- format_write_data_download(all_data, "total", "all_programs")
+
+```
+
+This project is a collaboration between [The Chicago Community Trust](https://www.cct.org/) and the [Urban Institute](https://www.urban.org/). It is supported by a grant from the Kresge Foundation through the [Shared Prosperity Partnership](http://www.sharedprosperitypartnership.org/).
+
+For more information about the dashboard, please contact [Aimee Ramirez](mailto:aramirez@cct.org) (The Chicago Community Trust) and [Karolina Ramos](mailto:kramos@urban.org) (Urban Institute).
+
+<br>
+
+The code used to create this dashboard can be found on [GitHub](https://github.com/Chi-Trust/Recovery-Funds-Dashboard).
