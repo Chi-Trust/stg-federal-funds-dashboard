@@ -8,7 +8,7 @@ For more information about the dashboard, please contact [Aimee Ramirez](mailto:
 - All updates to the dashboard should be made on the `stg-federal-funds-dashboard` repository. 
 - Before making any updates, make sure to `git pull` the most recent version of the staging dashboard from GitHub.
 - To update the staging dashboard data:
-  - Edit the `data/cct_dashboard_data.csv` file and push the edits to this repository. 
+  - Edit the `data/cct_dashboard_data.csv` file for recovery funds edits and `data/IIJA Programs List.xlsx` for infrastructure funds edits and push the updated file(s) to this repository. 
   - Let Alena or Manu know that the changes have been pushed, and they will update the staging dashboard with the new data.
 - To update the staging dashboard:
   - Edit the relevant file(s) corresponding to the page(s) of the dashboard you want to edit (`index.Rmd`, `recovery-funds.Rmd`, `infrastructure-funds.Rmd`, 
