@@ -88,59 +88,142 @@ font_import(paths = pc_font_path,
             prompt = FALSE
 )
 
+# set current fiscal year 
+cur_date <- Sys.Date()
+cur_fiscal_year <- if_else(
+  month(cur_date) > 9, 
+  year(cur_date) + 1,
+  year(cur_date)
+)
 
-data_programs <- read_excel(here("data", "IIJA Program List.xlsx"), 
-                   sheet = "Proposed programs for tracking") %>%
+
+
+data_programs <- read_excel(here("data", 
+                                 "IIJA Program List.xlsx"), 
+                   sheet = "Programs",
+                   col_types = c("CFDA"= "text")) %>%
   janitor::clean_names() %>%
   select(-legislation_section_number_s_or_page_number) %>%
-  pivot_longer(cols = matches(".+[0-9]{4}"),
-               names_to = c("geography", "year"),
-               names_sep = "_fy_",
-               values_to = "allocation") %>%
-  mutate(
-    geography = str_to_title(str_replace(geography, "_", " ")),
-    recipient_name = str_to_title(case_when(
-      geography == "Other Special_purpose_1" ~ special_purpose_recipient_type_1,
-      geography == "Other Special_purpose_2" ~ special_purpose_recipient_type_2,
-      TRUE ~ geography)),
-    year = as.numeric(year)
-    )
-  
-
-data_projects <- read_excel(here("data", "IIJA Program List.xlsx"), 
-                   sheet = "Project-based funding") %>%
-  janitor::clean_names() %>%
-  mutate(recipient_name = str_to_title(case_when(
-    !is.na(other) ~ other,
-    !is.na(county) ~ "Cook County",
-    !is.na(city) ~ "Chicago",
-    TRUE ~ "Illinois"
-  ))) %>%
-  filter(include == "Yes") %>%
-  select(-c("category", "program_name"))
-
-data <-data_programs %>% 
-  left_join(data_projects, 
-            by = c("program_name" = "matching_program_name",
-                   "recipient_name" = "recipient_name",
-                   "year" = "year")) %>%
-  # include safety category with Roads, Bridges, and Major Projects and Rail with
-  # tranist to reduce to six categories
-  mutate(final_allocation = if_else(is.na(include), allocation, announced_funding),
-         category = case_when(
+  rename(total_funding_b = x5_yr_total_funding_b,
+         recipient_type = recipient) %>%
+  # include Safety category with Roads, Bridges, and Major Projects 
+  # include Rail category with tranist to reduce to six categories
+  mutate(category = case_when(
            category == "Safety" ~ "Roads, Bridges, and Major Projects", 
            category == "Rail" ~ "Transit",
            category == "EVs" ~ "Electric Vehicles",
            TRUE ~ category),
          category = factor(category),
-         funding_type = factor(funding_type),
-         recipient_name = if_else(recipient_name == "Rta: Pace & Metra",
-                                  "RTA: Pace & Metra",
-                                  recipient_name))  %>%
-  filter(!is.na(recipient_name) | final_allocation > 0) %>%
-  filter(!is.na(final_allocation))
+         funding_type = factor(funding_type))
+
+data_allocations <- read_excel(here("data", 
+                                    "IIJA Program List.xlsx"), 
+                   sheet = "Allocations",
+                   col_types = c("CFDA"= "text")) %>%
+  janitor::clean_names() %>%
+  mutate(amount = as.numeric(amount),
+         ffy = as.numeric(ffy),
+         recipient = if_else(recipient == "Illinois",
+                             "Illinois - Entire State",
+                             str_to_title(recipient))) %>%
+  select(-c("category", "cfda")) %>%
+  left_join(data_programs, 
+            by = "program_name")
+
+data_awards <- read_excel(here("data",
+                               "IIJA Program List.xlsx"), 
+                   sheet = "Awards",
+                   col_types = c("CFDA"= "text")) %>%
+  janitor::clean_names() %>%
+  select(-cfda) %>%
+  mutate(amount = as.numeric(amount),
+         ffy = as.numeric(ffy),
+         recipient_agency = case_when(
+           recipient == "ILLINOIS ENVIRONMENTAL PROTECTION AGENCY" ~ "EPA",
+           recipient == "Illinois DOT" ~ "DOT",
+           TRUE ~ NA_character_
+         ),
+         recipient = case_when(!is.na(recipient_agency) ~ "Illinois - Chicago Area",
+                               TRUE ~ str_to_title(recipient))) %>%
+  left_join(data_programs, 
+            by = "program_name")
+
+data_awards_cols <- data_awards %>%
+  select(category, 
+         agency, 
+         sub_agency, 
+         funding_type,
+         description,
+         expiration,
+         total_funding_b,
+         cfda, 
+         program_name, 
+         ffy, 
+         recipient_name = recipient, 
+         amount,
+         amount_type)
+
+data_allocations_cols <- data_allocations %>%
+  select(category, 
+         funding_agency = agency, 
+         funding_sub_agency = sub_agency, 
+         funding_type,
+         description,
+         expiration,
+         total_funding_b,
+         cfda, 
+         program_name, 
+         ffy, 
+         recipient_name = recipient,
+         amount,
+         amount_type = award_type)
+
+data <- bind_rows(data_awards_cols %>% filter(ffy < cur_fiscal_year),
+                  data_allocations_cols %>% filter(ffy == cur_fiscal_year) ) 
 
 write_csv(data, here("data/intermediate_data/inf_data_clean.csv"))
+
+# Make this available for download
+data_all <- bind_rows(data_awards_cols,
+                      data_allocations_cols)
+
+transit_recipient_mapping <- tibble(
+  allocation_name = c("Chicago Area Transit Authorities"),
+  award_name = c("Chicago Transit Authority",
+                 "Metra Commuter Railroad",
+                 "Pace-Suburban Bus Division")
+)
+
+# airport_recipient_mapping <- tibble(
+#   allocation_name = c("Chicago Airports"),
+#   award_name = c("Chicago Midway International - Mdw", 
+#                  "Chicago O'hare International - Ord",
+#                  "Lansing Municipal - Igq")
+# )
+
+#all_mapping <- bind_rows(transit_recipient_mapping, airport_recipient_mapping)
+
+allocation_totals <- data_allocations %>%
+  group_by(program_name, ffy, recipient) %>%
+  summarise(total_amount_allocation = sum(amount, na.rm = TRUE))
+
+award_totals <- data_awards %>%
+  left_join(transit_recipient_mapping, by = c("recipient" = "award_name")) %>%
+  mutate(recipient = if_else(!is.na(allocation_name), 
+                              allocation_name, 
+                              recipient)) %>%
+  group_by(program_name, ffy, recipient) %>%
+  summarise(total_amount_award = sum(amount, na.rm = TRUE))
+
+all_totals <- allocation_totals %>%
+  filter(recipient != "Illinois - Entire State") %>%
+  left_join(award_totals, by = c("program_name", "ffy", "recipient")) %>%
+  mutate(amount_diff = total_amount_award - total_amount_allocation,
+         pct_diff = round((amount_diff/total_amount_allocation)*100, 2)) %>%
+  left_join(data_programs %>% select(category, program_name), by = "program_name")
+
+write_csv(all_totals, "data/intermediate_data/allocation_award_diff.csv")
+
 ```
 
 
@@ -149,8 +232,8 @@ write_csv(data, here("data/intermediate_data/inf_data_clean.csv"))
 ```{r}
 data %>% 
   group_by(recipient_name) %>%
-  summarise("Total Appropriations in Dashboard (millions)" = 
-              sum(final_allocation, na.rm = TRUE)/ 1000000) %>%
+  summarise("Total Funding in Dashboard (millions)" = 
+              sum(amount, na.rm = TRUE)/ 1000000) %>%
   rename("Recipient" = "recipient_name") %>%
   DT::datatable(
     options = list(dom = 't'), 
@@ -173,14 +256,14 @@ data %>%
 plot_funds_by_geo_var <- function(data, fill_var){
   
   data <- data %>%
-    mutate(final_allocation = final_allocation / 1000000)
+    mutate(amount = amount / 1000000)
   
   fill_var <- enquo(fill_var)
   
   recipient_levels <- data %>%
    group_by(recipient_name) %>% 
-   summarise(total_allocation = sum(final_allocation, na.rm = TRUE)) %>%
-   arrange(total_allocation) %>% 
+   summarise(total_amount = sum(amount, na.rm = TRUE)) %>%
+   arrange(total_amount) %>% 
    pull(recipient_name) %>% 
    unique()
  
@@ -195,15 +278,15 @@ plot_funds_by_geo_var <- function(data, fill_var){
  
   
   allocations_by_recipient_var <- data %>% 
-    select(recipient_name, funding_type, category, final_allocation) %>%
+    select(recipient_name, funding_type, category, amount) %>%
     group_by(recipient_name, !!fill_var) %>%
-    summarise(final_allocation = sum(final_allocation, na.rm = TRUE)) %>%
+    summarise(amount = sum(amount, na.rm = TRUE)) %>%
     mutate(recipient_name = factor(recipient_name, levels = recipient_levels),
-           allocation_str = scales::dollar(final_allocation),
-           label_height = cumsum(final_allocation)) %>% 
+           allocation_str = scales::dollar(amount),
+           label_height = cumsum(amount)) %>% 
     ggplot() +
     geom_col(mapping = aes(x = recipient_name, 
-                                  y = final_allocation, 
+                                  y = amount, 
                                   fill = !!fill_var,
                                   text = allocation_str)) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
@@ -211,7 +294,7 @@ plot_funds_by_geo_var <- function(data, fill_var){
     scale_fill_manual(values = fill_values,
                       breaks = fill_breaks)+
     labs(x = "Recipient", 
-         y = "Total Allocation (millions)",
+         y = "Total Funding (millions)",
          caption = "This graph shows selected projects funded through the Infrastructure Investment and Jobs Act. For more detail, see the FAQ.") +
     coord_flip() +
     theme(text = element_text(family = "Merriweather",
@@ -249,7 +332,7 @@ plot_funds_by_geo_var(data, category)
 #| fig-height: 6
 #| fig-alt: "TBD"
 
-plot_funds_by_geo_var(data %>% filter(year == 2022), category)
+plot_funds_by_geo_var(data %>% filter(ffy == 2022), category)
 ```
 
 ## FY2023
@@ -259,7 +342,7 @@ plot_funds_by_geo_var(data %>% filter(year == 2022), category)
 #| fig-height: 6
 #| fig-alt: "TBD"
 
-plot_funds_by_geo_var(data %>% filter(year == 2023), category)
+plot_funds_by_geo_var(data %>% filter(ffy == 2023), category)
 ```
 
 <br> <br>
@@ -285,7 +368,7 @@ plot_funds_by_geo_var(data, funding_type)
 #| fig-alt: "TBD"
 
 
-plot_funds_by_geo_var(data %>% filter(year == 2022), funding_type)
+plot_funds_by_geo_var(data %>% filter(ffy == 2022), funding_type)
 ```
 
 ## FY2023
@@ -296,58 +379,53 @@ plot_funds_by_geo_var(data %>% filter(year == 2022), funding_type)
 #| fig-alt: "TBD"
 
 
-plot_funds_by_geo_var(data %>% filter(year == 2023), funding_type)
+plot_funds_by_geo_var(data %>% filter(ffy == 2023), funding_type)
 ```
 
 ```{r}
 create_treemap_by_topic <- function(data_filter){
   # function that creates treemap by jurisdiction
   data_filter <- data_filter %>%
-    filter(final_allocation > 0) %>%
-    mutate(
-           final_program_name = if_else(is.na(project_name),
-                                               program_name,
-                                               project_name)) %>%
-    group_by(final_program_name, recipient_name) %>%
+    filter(amount > 0) %>%
+    group_by(program_name, recipient_name) %>%
     # sum allocation for a given program and recipient across years
-    summarize(final_allocation = sum(final_allocation)) %>%
+    summarize(amount = sum(amount)) %>%
     mutate(al_formatted = paste0("$", 
-                                 formatC(final_allocation, 
+                                 formatC(amount, 
                                          big.mark = ",", 
                                          format = 'f', 
                                          digits = 0)))
+  
+    all_recip <- unique(data_filter$recipient_name)
+    
+    
     if (nrow(data_filter) > 0){
       treemap_by_geo <- data_filter %>%
-        ggplot(aes(area = final_allocation, 
+        ggplot(aes(area = amount, 
                    fill = recipient_name, 
-                   label = paste(final_program_name, "\n", al_formatted))) +
+                   label = paste(program_name, "\n", al_formatted))) +
         geom_treemap(color = "white", size = 2) +
         geom_treemap_text(
           aes(color = recipient_name), 
                           place = "center", 
                           grow = TRUE, 
                           reflow = TRUE) +
-        scale_color_manual(values = c("white", "black", "white", "white", "white", "white"),
-                           breaks = c("Chicago", 
-                                     "Chicago Airports", 
-                                     "Chicago Transit Authority", 
-                                     "Cook County",
-                                     "Illinois",
-                                     "RTA: Pace & Metra")) +
+        scale_color_manual(values = c("white",
+                                             "black", 
+                                             "white", 
+                                             "white", 
+                                             "white", 
+                                             "white")[1:length(all_recip)],
+                           breaks = all_recip) +
         scale_fill_manual(values = c("#47c3d3", 
                                      "#C1D82F", 
                                      "#6C5893", 
                                      "#000000",
                                      "#4765BD",
-                                     "#FDBB30"),
-                          breaks = c("Chicago", 
-                                     "Chicago Airports", 
-                                     "Chicago Transit Authority", 
-                                     "Cook County",
-                                     "Illinois",
-                                     "RTA: Pace & Metra")) +
-        labs(title = "Programs by Proportion of Total Policy Area Allocations",
-             caption = "This graph shows selected projects funded through the Infrastructure Investment and Jobs Act (IIJA). Text may not appear for some projects with smaller allocation amounts\n when viewing all programs. For more detail, see the FAQ.",
+                                     "#FDBB30")[1:length(all_recip)],
+                          breaks = all_recip) +
+        labs(title = "Programs by Proportion of Total Policy Area Funding",
+             caption = "This graph shows selected projects funded through the Infrastructure Investment and Jobs Act (IIJA). Text may not appear for some projects with smaller funding amounts\n when viewing all programs. For more detail, see the FAQ.",
              alt = "test alt") +
         theme(text = element_text(family = "Merriweather"),
               plot.caption.position = "plot",
@@ -355,7 +433,7 @@ create_treemap_by_topic <- function(data_filter){
       
       return(treemap_by_geo)
     } else {
-      return("There are no programs with known allocations in this policy area.")
+      return("There are no programs with known funding in this policy area.")
     }
 }
 
@@ -363,16 +441,23 @@ create_table_by_topic <- function(data_filter) {
   # function that creates detailed program table by jurisdiction
   
     table_by_topic <- data_filter %>%
-      mutate(final_allocation = final_allocation / 1000000) %>%
-      select(program_name, funding_type, description, agency, project_name, year, recipient_name, final_allocation) %>%
+      mutate(amount = amount / 1000000) %>%
+      select(program_name, 
+             funding_type, 
+             description, 
+             agency, 
+             ffy, 
+             recipient_name, 
+             amount,
+             amount_type) %>%
       rename("Program" = "program_name",
-             "Funding Type" = "funding_type",
+             "Program Type" = "funding_type",
              "Description" = "description",
              "Agency" = "agency",
-             "Project Name (if known)" = "project_name",
-             "Fiscal Year" = "year",
+             "Fiscal Year" = "ffy",
              "Recipient" = "recipient_name",
-             "Allocation (millions)" = "final_allocation") %>%
+             "Funding (millions)" = "amount",
+             "Funding Type" = "amount_type") %>%
       DT::datatable(
         options = list(
           autoWidth = FALSE,
@@ -380,7 +465,7 @@ create_table_by_topic <- function(data_filter) {
             list(targets = 3, width = '600px'))),
         rownames = FALSE,
         escape = FALSE) %>%
-      formatCurrency("Allocation (millions)", currency = "$",  interval = 3, mark = ",")
+      formatCurrency("Funding (millions)", currency = "$",  interval = 3, mark = ",")
   
   return(table_by_topic)
 }
