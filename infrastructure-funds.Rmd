@@ -97,6 +97,10 @@ cur_fiscal_year <- if_else(
 )
 
 
+download.file("https://urbanorg.box.com/shared/static/pudlny8suyexu6so03dr5i0yei53yf5s.xlsx",
+              destfile = here("data", 
+                                 "IIJA Program List.xlsx"),
+              mode = "wb")
 
 data_programs <- read_excel(here("data", 
                                  "IIJA Program List.xlsx"), 
@@ -123,9 +127,9 @@ data_allocations <- read_excel(here("data",
   janitor::clean_names() %>%
   mutate(amount = as.numeric(amount),
          ffy = as.numeric(ffy),
-         recipient = if_else(recipient == "Illinois",
-                             "Illinois - Entire State",
-                             str_to_title(recipient))) %>%
+         recipient = case_when(recipient == "Illinois" ~ "Illinois - Location Unknown",
+                               recipient == "Chicago Area Transit Authorities" ~ "Chicago - Transit Authority Unknown",
+                               TRUE ~ recipient)) %>%
   select(-c("category", "cfda")) %>%
   left_join(data_programs, 
             by = "program_name")
@@ -139,12 +143,14 @@ data_awards <- read_excel(here("data",
   mutate(amount = as.numeric(amount),
          ffy = as.numeric(ffy),
          recipient_agency = case_when(
-           recipient == "ILLINOIS ENVIRONMENTAL PROTECTION AGENCY" ~ "EPA",
+           recipient == "Illinois Environmental Protection Agency" ~ "EPA",
            recipient == "Illinois DOT" ~ "DOT",
+           recipient == "Illinois DCEO" ~ "DCEO",
+           recipient == "Metra" ~ "Metra Commuter Railroad",
            TRUE ~ NA_character_
          ),
          recipient = case_when(!is.na(recipient_agency) ~ "Illinois - Chicago Area",
-                               TRUE ~ str_to_title(recipient))) %>%
+                               TRUE ~ recipient)) %>%
   left_join(data_programs, 
             by = "program_name")
 
@@ -188,7 +194,7 @@ data_all <- bind_rows(data_awards_cols,
                       data_allocations_cols)
 
 transit_recipient_mapping <- tibble(
-  allocation_name = c("Chicago Area Transit Authorities"),
+  allocation_name = c("Chicago - Transit Authority Unknown"),
   award_name = c("Chicago Transit Authority",
                  "Metra Commuter Railroad",
                  "Pace-Suburban Bus Division")

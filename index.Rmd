@@ -33,7 +33,11 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 </center>
 
-Placeholder text that explains the two dashboards contained in the tracker.
+The Recovery Funds Dashboard tracks a subset of the federal recovery funds flowing from the Coronavirus Aid, Relief, and Economic Security Act (CARES), the Consolidated Appropriations Act 2021 (CRRSAA), and the American Rescue Plan Act (ARPA) into the City of Chicago, Cook County, and the State of Illinois.
+
+The Infrastructure Funds Dashboard tracks federal funding through the Infrastructure Investment and Jobs Act (IIJA) to all recipients in the Chicago area.
+
+All funding amounts in the Recovery Funds Dashboard represent allocations made by the federal government to the governments of Chicago, Cook County, or Illinois. The Infrastructure Funds Dashboard includes a mix of allocations and awards: federal awards funding for all previous fiscal years (which is more precise in exact amount and use) and allocations for the current fiscal year (for which award details may not yet be known). Allocations of funds to the state of Illinois represent the total funding available to be spent throughout the state, and not only in the Chicago area. At the allocation stage, we don't have enough information on precise uses to narrow to funds that will be spent in the Chicago area. For IIJA programs, the award information published by federal agencies is detailed enough to enable us to restrict the awards to the state of Illinois shown in the dashboard to only those for infrastructure projects in the city of Chicago or in Cook County. For CARES, CRRSAA, and ARPA programs, this level of geographically specific awards data is not available, so all allocations to Illinois are included.
 
 ```{r}
 #| echo: false
@@ -62,7 +66,8 @@ rec_data <- read_csv(here("data/intermediate_data",
                           "clean_data_dashboard.csv")) %>%
   rename("recipient_name" = "geography", 
          "final_allocation" = "allocation") %>%
-  select(final_allocation, legislation, recipient_name)
+  select(final_allocation, legislation, recipient_name) %>%
+  mutate(recipient_name = if_else(recipient_name == "Illinois", "Illinois - Location Unknown", recipient_name))
 
 
 all_data <- rbind(inf_data, rec_data) %>%
@@ -95,11 +100,14 @@ plot_funds_by_var <- function(data, fill_var, lab_text){
   fill_breaks <- data %>%
      pull(!!fill_var) %>%
      unique()
-   
-   fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
+  
+  if (length(fill_breaks) > 6) {
+    fill_values <- rep(c("#47c3d3"), each = length(fill_breaks))
+  } else {
+    fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
                     "#387ECF", "#FDBB30")[1:length(fill_breaks)]
+  }
    
- 
   
   allocations_by_var <- data %>% 
     group_by(!!fill_var) %>%
