@@ -3,7 +3,7 @@ title: ""
 output: 
   html_document:
     number_sections: false
-    self_contained: true
+    self_contained: TRUE
     code_folding: none
     toc: false
     toc_float: false
