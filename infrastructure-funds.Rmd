@@ -127,7 +127,7 @@ data_allocations <- read_excel(here("data",
   janitor::clean_names() %>%
   mutate(amount = as.numeric(amount),
          ffy = as.numeric(ffy),
-         recipient = case_when(recipient == "Illinois" ~ "Illinois - Location Unknown",
+         recipient = case_when(recipient == "Illinois" ~ "Illinois - Location TBD",
                                recipient == "Chicago Area Transit Authorities" ~ "Chicago - Transit Authority Unknown",
                                TRUE ~ recipient)) %>%
   select(-c("category", "cfda")) %>%
@@ -184,8 +184,33 @@ data_allocations_cols <- data_allocations %>%
          amount,
          amount_type = award_type)
 
+transit_recipient_mapping <- tibble(
+  allocation_name = c("Chicago - Transit Authority Unknown"),
+  award_name = c("Chicago Transit Authority",
+                 "Metra Commuter Railroad",
+                 "Pace-Suburban Bus Division"),
+  summary_name = c("Transit Authorities in Chicago Area")
+)
+
+airport_recipient_mapping <- tibble(
+  allocation_name = c("Chicago Airports"),
+  award_name = c("Chicago Midway International - MDW",
+                 "Chicago O'Hare International - ORD"),
+  summary_name = c("Airports in Chicago Area")
+)
+
+all_mapping <- bind_rows(transit_recipient_mapping, airport_recipient_mapping)
+
 data <- bind_rows(data_awards_cols %>% filter(ffy < cur_fiscal_year),
-                  data_allocations_cols %>% filter(ffy == cur_fiscal_year) ) 
+                  data_allocations_cols %>% filter(ffy == cur_fiscal_year))  %>%
+  filter(recipient_name != "Lansing Municipal - IGQ") %>%
+  left_join(all_mapping, by = c("recipient_name" = "award_name")) %>%
+  mutate(summary_recipient = case_when(
+    recipient_name == "Chicago - Transit Authority Unknown" ~ "Transit Authorities in Chicago Area",
+    recipient_name %in% c("Illinois - Location TBD", "Illinois - Chicago Area") ~ "Illinois",
+    !is.na(summary_name) ~ summary_name,
+    TRUE ~ recipient_name))
+              
 
 write_csv(data, here("data/intermediate_data/inf_data_clean.csv"))
 
@@ -193,21 +218,6 @@ write_csv(data, here("data/intermediate_data/inf_data_clean.csv"))
 data_all <- bind_rows(data_awards_cols,
                       data_allocations_cols)
 
-transit_recipient_mapping <- tibble(
-  allocation_name = c("Chicago - Transit Authority Unknown"),
-  award_name = c("Chicago Transit Authority",
-                 "Metra Commuter Railroad",
-                 "Pace-Suburban Bus Division")
-)
-
-# airport_recipient_mapping <- tibble(
-#   allocation_name = c("Chicago Airports"),
-#   award_name = c("Chicago Midway International - Mdw", 
-#                  "Chicago O'hare International - Ord",
-#                  "Lansing Municipal - Igq")
-# )
-
-#all_mapping <- bind_rows(transit_recipient_mapping, airport_recipient_mapping)
 
 allocation_totals <- data_allocations %>%
   group_by(program_name, ffy, recipient) %>%
@@ -319,6 +329,115 @@ plot_funds_by_geo_var <- function(data, fill_var){
   return(allocations_by_recipient_var)
 }
 
+
+plot_funds_by_geo_var_obs <- function(data, fill_var){
+    
+ data <- data %>%
+    mutate(amount = amount / 1000000,
+           summary_recipient = if_else(
+             summary_recipient == "Transit Authorities in Chicago Area",
+             "Transit Authorities\nin Chicago Area",
+             summary_recipient),
+            {{ fill_var }} := factor(if_else(
+             {{ fill_var }} == "Roads, Bridges, and Major Projects",
+             "Roads, Bridges,\nand Major Projects",
+             {{fill_var}})
+           ))
+ 
+  fill_var <- enquo(fill_var)
+  
+  recipient_levels <- data %>%
+   group_by(summary_recipient) %>% 
+   summarise(total_amount = sum(amount, na.rm = TRUE)) %>%
+   arrange(total_amount) %>% 
+   pull(summary_recipient) %>% 
+   unique()
+ 
+ 
+  fill_breaks <- data %>%
+     pull(!!fill_var) %>%
+     levels()
+   
+   fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
+                    "#387ECF", "#FDBB30")[1:length(fill_breaks)]
+                    
+   
+   if (length(unique(data$ffy)) > 1) {
+     funding_sentence = "This chart shows a combination of actual federal funding\nwhere the specific recipient and use are determined (awards) for previous fiscal years\nand expected federal funding where the specific recipient and use may not be determined (allocations)\nfor the current fiscal year."
+     
+     ylab = "Total Actual and Expected Funding (millions)"
+     
+   } else if(max(data$ffy) == cur_fiscal_year) {
+     funding_sentence = "This chart shows expected federal funding\nwhere the specific recipient and use may not be determined (allocations) for the current fiscal year."
+     
+     ylab = "Total Expected Funding (millions)"
+     
+   } else {
+     funding_sentence = "This chart shows actual federal funding\nwhere the specific recipient and use are determined (awards) for previous fiscal years."
+     
+     ylab = "Total Actual Funding (millions)"
+   }
+   
+ 
+  
+   allocations_by_recipient_var <- data %>% 
+     select(summary_recipient, recipient_name, funding_type, category, amount) %>%
+     group_by(summary_recipient, recipient_name, !!fill_var) %>%
+     summarise(amount = sum(amount, na.rm = TRUE)) %>%
+     mutate(summary_recipient = factor(summary_recipient, levels = recipient_levels),
+            allocation_str = str_c(recipient_name, ": ", scales::dollar(amount)),
+            label_height = cumsum(amount)) %>% 
+     ggplot() +
+     geom_col(mapping = aes(x = summary_recipient, 
+                            y = amount, 
+                            fill = !!fill_var,
+                            text = allocation_str),
+              color = "white",
+              size = 0.1) +
+     scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
+                        labels = scales::dollar) +
+     scale_fill_manual(values = fill_values,
+                       breaks = fill_breaks) +
+     labs(x = "Recipient", 
+          y = ylab,
+          fill = NULL) +
+     coord_flip() +
+     theme(text = element_text(family = "Merriweather",
+                               face = "plain",
+                               colour = "#000000",
+                               size = 8.5,
+                               hjust = 0.5,
+                               vjust = 0.5,
+                               angle = 0,
+                               lineheight = 0.9,
+                               margin = ggplot2::margin(),
+                               debug = FALSE))
+   
+   plt <- ggplotly(allocations_by_recipient_var, tooltip = "text") %>%
+     layout(autosize = F, 
+            width = 850, 
+            h = 500, 
+            margin = list(
+              l = 50, 
+              r = 50,
+              t = 50,
+              b = 150
+            ),
+            annotations = list(
+              x = 0,
+              y = -0.6,
+              text = str_glue("This graph shows selected projects funded through the Infrastructure Investment and Jobs Act.\nFor more detail, see the FAQ.{funding_sentence}"),
+              showarrow = F, xref='paper', yref='paper', 
+      font=list(size=12)),
+      xaxis = list(title = list(font = list(size = 14)), tickfont = list(size = 12)),
+      yaxis = list(title = list(font = list(size = 14)), tickfont = list(size = 12)),
+      legend = list(font = list(size = 12))
+            )
+   
+  return(plt)
+}
+
+
 ```
 
 ## All
@@ -352,6 +471,35 @@ plot_funds_by_geo_var(data %>% filter(ffy == 2023), category)
 ```
 
 <br> <br>
+
+# Option 1 {.tabset .tabset-pills}
+
+## All
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data, category)
+```
+
+## FY2022
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data %>% filter(ffy == 2022), category)
+```
+
+## FY2023
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data %>% filter(ffy == 2023), category)
+```
+
+<br><br><br>
+
 
 # Infrastructure Funding by Recipient and Funding Type {.tabset .tabset-pills}
 
@@ -387,6 +535,42 @@ plot_funds_by_geo_var(data %>% filter(ffy == 2022), funding_type)
 
 plot_funds_by_geo_var(data %>% filter(ffy == 2023), funding_type)
 ```
+
+
+# Option 1 {.tabset .tabset-pills}
+
+## All
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data, funding_type)
+```
+
+## FY2022
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data %>% filter(ffy == 2022), funding_type)
+```
+
+## FY2023
+
+```{r}
+#| fig-alt: "TBD"
+
+plot_funds_by_geo_var_obs(data %>% filter(ffy == 2023), funding_type)
+```
+
+## Key Terms
+
+- **Competitive:** grants that recipients apply for and are selected to receive based on merits of application.
+- **Formula**: grants that eligible recipients are guaranteed to receive based on funding criteria.
+- **Earmarks:** funds provided by Congress for specific projects, not to be allocated by federal agencies through a competitive process. 
+- **Revolving loan funds:** a pool of money that uses interest and principal payments on old loans to issue new loans. 
+
+<br><br>
 
 ```{r}
 create_treemap_by_topic <- function(data_filter){
