@@ -418,11 +418,11 @@ plot_funds_by_geo_var_obs <- function(data, fill_var){
    
    plt <- ggplotly(allocations_by_recipient_var, tooltip = "text") %>%
      layout(autosize = F, 
-            width = 800, 
+            width = 865, 
             h = 500, 
             margin = list(
               l = 120, 
-              r = 120,
+              r = 100,
               t = 50,
               b = 120
             ),
