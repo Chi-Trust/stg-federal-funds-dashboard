@@ -62,15 +62,17 @@ set_urbn_defaults(style = "print", base_size = 12)
 inf_data <- read_csv(here("data/intermediate_data", 
                           "inf_data_clean.csv")) %>%
   mutate(legislation = "IIJA") %>%
-  select(final_allocation = amount, legislation, recipient_name)
+  select(final_allocation = amount, legislation, recipient_name = summary_recipient)
 
 # read recovery data
 rec_data <- read_csv(here("data/intermediate_data",
                           "clean_data_dashboard.csv")) %>%
   rename("recipient_name" = "geography", 
          "final_allocation" = "allocation") %>%
-  select(final_allocation, legislation, recipient_name) %>%
-  mutate(recipient_name = if_else(recipient_name == "Illinois", "Illinois - Location Unknown", recipient_name))
+  mutate(recipient_name = if_else(recipient_name == "Chicago", 
+                                  "City of Chicago", 
+                                  recipient_name)) %>%
+  select(final_allocation, legislation, recipient_name) 
 
 
 all_data <- rbind(inf_data, rec_data) %>%
