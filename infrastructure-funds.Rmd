@@ -40,11 +40,12 @@ cur_date <- Sys.Date()
 
 <br>
 
-The Bipartisan Infrastructure Law (Infrastructure Investment and Jobs Act) will...
+Passed in November 2021, the Infrastructure Investment and Jobs Act—also known as the Bipartisan Infrastructure Law—provides historic funding to rebuild and enhance the nation’s infrastructure. IIJA programs offer funding for localities to repair and improve transit systems and infrastructure such as roads, bridges, and airports, to advance environmental justice and climate resilience in communities, to expand access to broadband, and to restore clean water systems, among other initiatives.  
 
-**This dashboard tracks a subset of the federal infrastructure funds flowing into the City of Chicago, Cook County, and the State of Illinois** 
+As individual IIJA funding opportunities are announced and awarded, this dashboard captures a **subset of federal funds** flowing directly to the City of Chicago, the Chicago Transit Authority, Chicago-area airports, Cook County, the Regional Transit Authority (Pace and Metra) and the State of Illinois. Data in the dashboard reflect major IIJA programs—those with at least $1 billion in funding—that address local and regional transit, roads, bridges, airports, electric vehicles, water infrastructure, rail, broadband, and traffic safety programs.  
 
-[Placeholder for more intro text]
+The dashboard displays both allocations, or designated allocations for a jurisdiction’s projects, as well as awards, or the final funding amount disbursed to a jurisdiction. Awards data are presented for previous fiscal years, and allocations data are presented for the current fiscal year. The dashboard will continue to be updated as new data become available. 
+
 
 ```{r setup}
 #| echo: false
@@ -446,40 +447,6 @@ plot_funds_by_geo_var_obs <- function(data, fill_var){
 ## All
 
 ```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-plot_funds_by_geo_var(data, category)
-```
-
-## FY2022
-
-```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-plot_funds_by_geo_var(data %>% filter(ffy == 2022), category)
-```
-
-## FY2023
-
-```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-plot_funds_by_geo_var(data %>% filter(ffy == 2023), category)
-```
-
-<br> <br>
-
-# Option 1 {.tabset .tabset-pills}
-
-## All
-
-```{r}
 #| fig-alt: "TBD"
 
 plot_funds_by_geo_var_obs(data, category)
@@ -509,42 +476,6 @@ plot_funds_by_geo_var_obs(data %>% filter(ffy == 2023), category)
 
 
 # Infrastructure Funding by Recipient and Funding Type {.tabset .tabset-pills}
-
-## All
-
-```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-
-plot_funds_by_geo_var(data, funding_type)
-```
-
-## FY2022
-
-```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-
-plot_funds_by_geo_var(data %>% filter(ffy == 2022), funding_type)
-```
-
-## FY2023
-
-```{r}
-#| fig-width: 11.5
-#| fig-height: 6
-#| fig-alt: "TBD"
-
-
-plot_funds_by_geo_var(data %>% filter(ffy == 2023), funding_type)
-```
-
-
-# Option 1 {.tabset .tabset-pills}
 
 ## All
 
