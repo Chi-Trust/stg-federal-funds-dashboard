@@ -206,8 +206,6 @@ The inclusive recovery funds we track represent a subset of COVID-19 assistance 
 
 ```
 
-## About the Dashboard 
-
 **The inclusive recovery funds we track represent a subset of COVID-19 assistance provided by the federal government.** The dashboard only reflects funds flowing directly from the federal government to the State of Illinois, Cook County, and the City of Chicago that can be used for inclusive recovery efforts that align with key priorities of The Chicago Community Trust: community investment, community safety, household investment, housing, and workforce development, which are all vital to narrowing the Chicago region’s racial and ethnic wealth gap. It does not include funds provided by the federal government directly to public housing authorities, school districts, universities, or nongovernmental organizations, such as non-profits or private sector firms. 
  
 **The IIJA funds we track represent a subset of federal programs.** The dashboard only reflects funds flowing directly to the City of Chicago, the Chicago Transit Authority, Chicago-area airports, Cook County, the Regional Transit Authority (Pace and Metra) and the State of Illinois. Data in the dashboard reflect major IIJA programs—those with at least $1 billion in funding—that address transit, roads, bridges, airports, electric vehicles, water infrastructure, rail, broadband, and traffic safety. The dashboard does not include funds spent directly by federal agencies, “pass-through funds” that are passed from an original recipient to another jurisdiction where the are ultimately spent, or funds to utility providers, economic development authorities, school districts, or nongovernmental organizations, such as non-profits or private sector funds.  
