@@ -31,9 +31,12 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 **This dashboard is a draft that is undergoing active development. It should not be shared or used for analysis. The most recent published version of the dashboard can be found [here](https://chi-trust.github.io/Recovery-Funds-Dashboard/index.html)**
 
+
 </center>
 
 Federal COVID-19 pandemic response packages have provided state and local governments with unprecedented aid. The impact of these resources will directly result from how they are spent and in which communities. Given this unparalleled opportunity to ensure federal funds reach communities that need them most and propel momentum toward closing the racial and ethnic wealth gap, this dashboard aims to provide transparency on where funds are landing.
+
+<br>
 
 ```{r}
 #| echo: false
