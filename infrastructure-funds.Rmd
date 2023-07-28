@@ -46,6 +46,8 @@ As individual IIJA funding opportunities are announced and awarded, this dashboa
 
 The dashboard displays both allocations, or designated allocations for a jurisdiction’s projects, as well as awards, or the final funding amount disbursed to a jurisdiction. Awards data are presented for previous fiscal years, and allocations data are presented for the current fiscal year. The dashboard will continue to be updated as new data become available. 
 
+For more information, see our [Frequently Asked Questions](./FAQ.html) and [Glossary](./glossary.html).
+
 
 ```{r setup}
 #| echo: false
@@ -172,8 +174,8 @@ data_awards_cols <- data_awards %>%
 
 data_allocations_cols <- data_allocations %>%
   select(category, 
-         funding_agency = agency, 
-         funding_sub_agency = sub_agency, 
+         agency, 
+         sub_agency, 
          funding_type,
          description,
          expiration,
@@ -213,7 +215,7 @@ data <- bind_rows(data_awards_cols %>% filter(ffy < cur_fiscal_year),
     TRUE ~ recipient_name))
               
 
-write_csv(data, here("data/intermediate_data/inf_data_clean.csv"))
+write_csv(data %>% select(-allocation_name, -summary_name), here("data/intermediate_data/infrastructure_dashboard_data.csv"))
 
 # Make this available for download
 data_all <- bind_rows(data_awards_cols,

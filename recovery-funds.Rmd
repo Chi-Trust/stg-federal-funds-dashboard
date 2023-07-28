@@ -42,11 +42,12 @@ cur_date <- Sys.Date()
 
 <br>
 
-Federal COVID-19 pandemic-response packages have provided unprecedented aid to state and local governments, including \$800 billion that can be used flexibly to promote an inclusive recovery. These resources create an unparalleled opportunity for advocates and local decision-makers to ensure federal funds reach communities that need them most, close equity gaps exacerbated by the pandemic, and address the root causes of inequities. To take advantage of this opportunity, local leaders need timely data and evidence to ensure funds are used effectively and equitably.
+This dashboard tracks a **subset of the federal recovery funds** appropriated by the CARES Act, Consolidated Appropriations Act, and American Rescue Plan Act flowing into the City of Chicago, Cook County, and the State of Illinois. Funds tracked here align with The Chicago Community Trust’s key priorities: community investment, community safety, household investment, housing, and workforce development, which are all vital to narrowing the Chicago region’s racial and ethnic wealth gap. 
 
-**This dashboard tracks a subset of the federal recovery funds flowing into the City of Chicago, Cook County, and the State of Illinois** that can be used for inclusive recovery efforts that align with key priorities of The Chicago Community Trust: community investment, community safety, household investment, housing, and workforce development, which are all vital to narrowing the Chicago region's racial and ethnic wealth gap. The dashboard primarily tracks appropriations, or how much funding the federal government has committed to provide local jurisdictions. For a few select programs where information is available, the dashboard also explores spending by zip code.
+The dashboard primarily tracks appropriations, or how much funding the federal government has committed to providing local jurisdictions. For a few select programs where information is available, the dashboard also explores spending by zip code.
 
-We will add more program allocation and spending information as new data become available. For more information, including the **glossary and frequently asked questions**, see [About the Dashboard](./index.html#about-the-dashboard) below.
+
+We will add more program allocation and spending information as new data become available. For more information, see our [Frequently Asked Questions](./FAQ.html) and [Glossary](./glossary.html).
 
 <br> <br>
 
@@ -166,7 +167,8 @@ data_all <- read_csv(here("data", "cct_dashboard_data.csv")) %>%
 data <- data_all %>% 
   filter(legislation != "Chicago General Obligation Bond")
 
-write_csv(data_all, here("data/intermediate_data", "clean_data_dashboard.csv"))
+write_csv(data_all, here("data/intermediate_data",
+                         "recovery_dashboard_data.csv"))
 ```
 
 ```{r, include=FALSE}
@@ -472,7 +474,7 @@ format_write_data_download <- function(data_filter, geo_format, policy_name){
                           str_glue("{policy_name}_{geo_format}.zip")),
       
            files = c(str_glue("data/dashboard_downloads/{policy_name}_{geo_format}.csv"),
-                     "docs/data_dictionary.csv")
+                     "docs/recovery_data_dictionary.csv")
   )
   
   put_object(file = here("data/dashboard_downloads", str_glue("{policy_name}_{geo_format}.zip")),
