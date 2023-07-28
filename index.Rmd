@@ -50,6 +50,8 @@ library(tidyverse)
 library(here)
 library(urbnthemes)
 library(plotly)
+library(aws.s3)
+library(dotenv)
 set_urbn_defaults(style = "print", base_size = 12)
 
 # read infrastructure data
@@ -190,7 +192,11 @@ plot_funds_by_var(all_data, recipient_name, "Recipient")
 
 # About the Dashboard
 
-```{r, eval = FALSE}
+```{r}
+#| echo: false
+#| include: false
+
+bucket_name <- Sys.getenv("s3_bucket")
 
 zip::zip(zipfile = here("data/dashboard_downloads", "all_dashboard_data.zip"),
          files = c(
