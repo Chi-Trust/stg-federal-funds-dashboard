@@ -29,7 +29,7 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 <h1>DRAFT Federal Funds Tracker</h1>
 
-**This dashboard is a draft that is undergoing active development. It should not be shared or used for analysis. The most recent published version of the dashboard can be found [here](https://chi-trust.github.io/Recovery-Funds-Dashboard/index.html)**
+**This dashboard is a draft undergoing active development. It should not be shared or used for analysis. The most recent published version of the dashboard can be found [here](https://chi-trust.github.io/Recovery-Funds-Dashboard/index.html)**
 
 </center>
 
