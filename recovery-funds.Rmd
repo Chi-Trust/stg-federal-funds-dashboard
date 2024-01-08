@@ -129,7 +129,7 @@ total_fed_updated_date <- "2022-08-26"
 # Read in main program tracker
 #data <- read_excel(here("data", "CCT Dashboard - Program Tracker.xlsx"), 
 #                   sheet = "Programs") %>%
-data_all <- read_csv(here("data", "cct_dashboard_data.csv")) %>%
+data_all <- read_csv(here("data", "cct_dashboard_data.csv"),locale = locale(encoding = 'UTF-8')) %>%
   janitor::clean_names() %>%
   # create variable to indicate if program is expired, if expiration is NA, treat as not expired
   # because this indicates available until expended
@@ -620,8 +620,8 @@ format_write_data_download <- function(data_filter, geo_format, policy_name){
 
 
 create_table_by_geo <- function(data_filter, geo, policy_name) {
-  # function that creates detailed program table by jurisdiction
   
+  # function that creates detailed program table by jurisdiction
   geo_format <- str_replace_all(str_to_lower(geo), " ", "_")
   
   rename_data <- format_write_data_download(data_filter, geo_format, policy_name) %>%
@@ -631,10 +631,11 @@ create_table_by_geo <- function(data_filter, geo, policy_name) {
     rename_data <- rename_data %>%
       filter(Geography == geo) %>%
       select(-Geography) 
+    
     table_by_geo <- rename_data %>%
       DT::datatable(
         caption = htmltools::tags$caption(
-          style= 'caption-side: bottom; text-align: left; font-style: italic',
+        style= 'caption-side: bottom; text-align: left; font-style: italic',
     'Indicates that allocation amount is approximate. See FAQ for details.'), 
         options = list(
           autoWidth = FALSE,
@@ -1032,10 +1033,10 @@ chicago_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds"
                    data_filter = data_filter, 
                    geo = "Chicago")
 
-chic_rec_alt <- make_treemap_alt_text(data_all_filter, 
+chic_rec_alt <- map(c("Chicago General Obligation Bond", 
+                                                      "ARPA State and Local Fiscal Recovery Funds"), ~make_treemap_alt_text(data_all_filter, 
                                       geo = "Chicago", 
-                                      leg_name =  c("Chicago General Obligation Bond", 
-                                                      "ARPA State and Local Fiscal Recovery Funds"))
+                                      leg_name =  .x))
 
 
 cook_county_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds", "CARES", "CRRSAA"),
@@ -1258,10 +1259,10 @@ chicago_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds"
                    data_filter = data_filter, 
                    geo = "Chicago")
 
-chic_rec_alt <- make_treemap_alt_text(data_all_filter, 
+chic_rec_alt <- map(c("Chicago General Obligation Bond", 
+                                                      "ARPA State and Local Fiscal Recovery Funds"), ~make_treemap_alt_text(data_all_filter, 
                                       geo = "Chicago", 
-                                      leg_name =  c("Chicago General Obligation Bond", 
-                                                      "ARPA State and Local Fiscal Recovery Funds"))
+                                      leg_name =  .x))
 
 
 cook_county_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds", "CARES", "CRRSAA"),
@@ -1485,10 +1486,10 @@ chicago_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds"
                    data_filter = data_filter, 
                    geo = "Chicago")
 
-chic_rec_alt <- make_treemap_alt_text(data_all_filter, 
+chic_rec_alt <- map(c("Chicago General Obligation Bond", 
+                                                      "ARPA State and Local Fiscal Recovery Funds"), ~make_treemap_alt_text(data_all_filter, 
                                       geo = "Chicago", 
-                                      leg_name =  c("Chicago General Obligation Bond", 
-                                                      "ARPA State and Local Fiscal Recovery Funds"))
+                                      leg_name =  .x))
 
 
 cook_county_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds", "CARES", "CRRSAA"),
@@ -1714,10 +1715,10 @@ chicago_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds"
                    data_filter = data_filter, 
                    geo = "Chicago")
 
-chic_rec_alt <- make_treemap_alt_text(data_all_filter, 
+chic_rec_alt <- map(c("Chicago General Obligation Bond", 
+                                                      "ARPA State and Local Fiscal Recovery Funds"), ~make_treemap_alt_text(data_all_filter, 
                                       geo = "Chicago", 
-                                      leg_name =  c("Chicago General Obligation Bond", 
-                                                      "ARPA State and Local Fiscal Recovery Funds"))
+                                      leg_name =  .x))
 
 
 cook_county_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds", "CARES", "CRRSAA"),
