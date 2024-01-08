@@ -83,7 +83,7 @@ set_urbn_defaults(style = "print", base_size = 12)
 pc_font_path <- "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
 mac_font_path <- "~/Library/Fonts"
 
-font_import(paths = pc_font_path,
+font_import(paths = mac_font_path,
             pattern = "Merriweather",
             prompt = FALSE
 )
