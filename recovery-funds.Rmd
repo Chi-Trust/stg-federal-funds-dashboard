@@ -85,7 +85,7 @@ set_urbn_defaults(style = "print", base_size = 12)
 pc_font_path <- "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
 mac_font_path <- "~/Library/Fonts"
 
-font_import(paths = mac_font_path,
+font_import(paths = pc_font_path,
             pattern = "Merriweather",
             prompt = FALSE
 )
@@ -386,7 +386,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ### Chicago 
 
-```{r}
+```{r fig.width = 10, fig.height = 6}
 data_filter <- data %>% 
   filter(geography == "Chicago", !is.na(allocation),
          legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
@@ -396,19 +396,30 @@ plot_difference_in_allocation_vs_spending <- function(data){
     
   original_allocations <-
     data %>% 
-    summarise(allocation = sum(allocation, na.rm = TRUE), .by = c(topic))
+    summarise(allocation = sum(allocation, na.rm = TRUE), .by = c(topic)) %>%
+    mutate(type = "Chicago Recovery Plan",
+           pct_spend = allocation/sum(allocation)) %>%
+    select(type, topic, pct_spend)
   
   spending_to_date <- 
     data %>% 
-    summarise(total_cumulative_expenditures = sum(total_cumulative_expenditures, na.rm = TRUE), .by = c(topic))
+    summarise(total_cumulative_expenditures = sum(total_cumulative_expenditures,
+                                                  na.rm = TRUE), 
+              .by = c(topic)) %>%
+    mutate(type = "Cumulative Spending",
+           pct_spend = total_cumulative_expenditures/sum(total_cumulative_expenditures)) %>%
+    select(type, topic, pct_spend)
   
-  original_allocation_vs_spending <-
-    original_allocations %>% 
-    left_join(spending_to_date, by = "topic") %>% 
-    mutate(pct_difference = (total_cumulative_expenditures) / allocation) 
+  # original_allocation_vs_spending <-
+  #   original_allocations %>% 
+  #   left_join(spending_to_date, by = "topic") %>% 
+  #   mutate(pct_difference = (total_cumulative_expenditures) / allocation) 
+  
+  original_allocation_vs_spending <- rbind(original_allocations, spending_to_date)
   
  p <- ggplot(original_allocation_vs_spending) +
-    geom_col(aes(x = reorder(topic, pct_difference), y = pct_difference)) +
+    geom_col(aes(x = reorder(topic, pct_spend), y = pct_spend, fill = factor(type)), 
+             position = "dodge") +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
                        labels = scales::percent) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
@@ -442,7 +453,7 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 ### Cook County
 
-```{r}
+```{r fig.width = 10, fig.height = 6}
 data_filter <- data %>% 
   filter(geography == "Cook County", !is.na(allocation),
          legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
@@ -453,7 +464,7 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 ### Illinois
 
-```{r}
+```{r fig.width = 10, fig.height = 6}
 data_filter <- data %>% 
   filter(geography == "Illinois", !is.na(allocation),
          legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
@@ -464,7 +475,7 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 ## Percent of obligated funds spent {.tabset .tabset-pills}
 
-```{r}
+```{r fig.width = 10}
 
 obligated_funds_by_geo <- function(geo){
   
@@ -604,16 +615,16 @@ format_write_data_download <- function(data_filter, geo_format, policy_name){
             here("data/dashboard_downloads", 
                  str_glue("{policy_name}_{geo_format}.csv")))
   
-   zip::zip(zipfile = here("data/dashboard_downloads", 
-                          str_glue("{policy_name}_{geo_format}.zip")),
-      
-           files = c(str_glue("data/dashboard_downloads/{policy_name}_{geo_format}.csv"),
-                     "docs/data_dictionary.csv")
-  )
+  #  zip::zip(zipfile = here("data/dashboard_downloads", 
+  #                         str_glue("{policy_name}_{geo_format}.zip")),
+  #     
+  #          files = c(str_glue("data/dashboard_downloads/{policy_name}_{geo_format}.csv"),
+  #                    "docs/data_dictionary.csv")
+  # )
   
-  put_object(file = here("data/dashboard_downloads", str_glue("{policy_name}_{geo_format}.zip")),
-             bucket = bucket_name,
-             object = str_glue("{policy_name}_{geo_format}.zip"))
+  # put_object(file = here("data/dashboard_downloads", str_glue("{policy_name}_{geo_format}.zip")),
+  #            bucket = bucket_name,
+  #            object = str_glue("{policy_name}_{geo_format}.zip"))
   
   return(rename_data)
 }
