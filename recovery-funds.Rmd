@@ -85,7 +85,7 @@ set_urbn_defaults(style = "print", base_size = 12)
 pc_font_path <- "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
 mac_font_path <- "~/Library/Fonts"
 
-font_import(paths = pc_font_path,
+font_import(paths = mac_font_path,
             pattern = "Merriweather",
             prompt = FALSE
 )
@@ -139,7 +139,8 @@ data_all <- read_csv(here("data", "cct_dashboard_data.csv")) %>%
       NA_Date_,
       mdy(expiration)
     ),
-    allocation = parse_number(allocation),
+    across(c(allocation, adopted_budget_per_treasury_report, total_cumulative_obligation, total_cumulative_expenditures, amount_exact),
+           ~ parse_number(.x)),
     is_expired = if_else(expiration > cur_date, 0, 1),
     is_expired = if_else(is.na(is_expired), 0, is_expired),
     expiration = if_else(is.na(expiration), 
@@ -168,6 +169,7 @@ data <- data_all %>%
 
 write_csv(data_all, here("data/intermediate_data", "clean_data_dashboard.csv"))
 ```
+
 
 ```{r, include=FALSE}
 # calculate totals appropriated and percent of appropriations that are unexpired by jurisdiction
@@ -337,7 +339,7 @@ plot_funds_by_geo_topic <- function(data, fill_var){
 
 data_filter <- data %>%
   filter(geography == "Chicago", !is.na(allocation)) %>% 
-  select(legislation, program, topic, subtopic, allocation)
+  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -352,7 +354,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 data_filter <- data %>%
   filter(geography == "Cook County", !is.na(allocation)) %>% 
-  select(legislation, program, topic, subtopic, allocation)
+  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -367,7 +369,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 data_filter <- data %>%
   filter(geography == "Illinois", !is.na(allocation)) %>% 
-  select(legislation, program, topic, subtopic, allocation)
+  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -375,6 +377,139 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 ```
 
 **Note:** The ARPA State and Local Fiscal Recovery Funds funding source captures the ARPA Fiscal Recovery Funds for Cook County, shown by their planned spending topics and subtopics according to the [Illinois ARPA Spending Plan](https://www2.illinois.gov/sites/budget/Documents/Budget%20Book/FY2022-Budget-Book/FY22_Enacted_ARPA_Summary_6.21.21.pdf). The state/local discretionary funding topic reflects CARES Coronavirus Relief Fund flexible funding for which more detailed spending is not known.
+
+
+
+# Explore ARPA State and Local Fiscal Recovery Funds Spending
+
+## Compare spending between the original recovery plan and spending to date by policy topic {.tabset .tabset-pills}
+
+### Chicago 
+
+```{r}
+data_filter <- data %>% 
+  filter(geography == "Chicago", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+
+plot_difference_in_allocation_vs_spending <- function(data){
+    
+  original_allocations <-
+    data %>% 
+    summarise(allocation = sum(allocation, na.rm = TRUE), .by = c(topic))
+  
+  spending_to_date <- 
+    data %>% 
+    summarise(total_cumulative_expenditures = sum(total_cumulative_expenditures, na.rm = TRUE), .by = c(topic))
+  
+  original_allocation_vs_spending <-
+    original_allocations %>% 
+    left_join(spending_to_date, by = "topic") %>% 
+    mutate(pct_difference = (total_cumulative_expenditures) / allocation) 
+  
+ p <- ggplot(original_allocation_vs_spending) +
+    geom_col(aes(x = reorder(topic, pct_difference), y = pct_difference)) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
+                       labels = scales::percent) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.01)), 
+                       labels = scales::percent) +
+    #    scale_fill_manual(values = fill_values,
+    #                      breaks = fill_breaks)+
+    labs(x = "Topic", 
+         y = "Expenditures to date relative to original allocation (percentage)",
+         caption = "This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date") +
+    coord_flip() +
+    theme(text = element_text(family = "Merriweather",
+                              face = "plain",
+                              colour = "#000000",
+                              size = 8.5,
+                              hjust = 0.5,
+                              vjust = 0.5,
+                              angle = 0,
+                              lineheight = 0.9,
+                              margin = ggplot2::margin(),
+                              debug = FALSE),
+          plot.caption.position = "plot",
+          plot.caption = element_text(hjust = 0))
+  
+  
+  return(p)
+}
+
+plot_difference_in_allocation_vs_spending(data_filter)
+
+```
+
+### Cook County
+
+```{r}
+data_filter <- data %>% 
+  filter(geography == "Cook County", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+
+plot_difference_in_allocation_vs_spending(data_filter)
+```
+
+### Illinois
+
+```{r}
+data_filter <- data %>% 
+  filter(geography == "Illinois", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+
+plot_difference_in_allocation_vs_spending(data_filter)
+```
+
+## Percent of obligated funds spent {.tabset .tabset-pills}
+
+```{r}
+
+obligated_funds_by_geo <- function(geo){
+  
+  #cat("### ", geo, "\n")
+data_all %>%
+    filter(geography == {{geo}}) %>% 
+  mutate(pct_obligated_funds_spent = total_cumulative_expenditures / adopted_budget_per_treasury_report) %>% 
+  select(geography, legislation, topic = new_topic, subtopic = new_subtopic, pct_obligated_funds_spent) %>% 
+  mutate(pct_obligated_funds_spent = scales::percent(round(pct_obligated_funds_spent, 2))) %>% 
+  DT::datatable(width = "250px",
+                colnames = c("Jurisdiction" = "geography",
+                             "Legislation" = "legislation",
+                             "Topic" = "topic",
+                             "Subtopic" = "subtopic",
+                             "Percentage of obligated funds spent" = "pct_obligated_funds_spent"),
+                 options = list(dom = 't', 
+                               autoWidth = TRUE,
+                               ordering = FALSE, 
+                               columnDefs = list(list(width = '190px', targets = c(0)), 
+                                                 list(width = '60px', targets = c(1))))) %>%
+   DT::formatStyle(columns = c(1, 2), fontSize = '9pt')
+}
+```
+
+```{r}
+#map(c("Chicago", "Cook County", "Illinois"), ~obligated_funds_by_geo(.x))
+
+```
+
+### Chicago
+```{r}
+obligated_funds_by_geo("Chicago")
+```
+
+### Cook County
+
+```{r}
+obligated_funds_by_geo("Cook County")
+```
+
+### Illinois
+```{r}
+obligated_funds_by_geo("Illinois")
+```
+
 
 ```{r, include=FALSE}
 
@@ -434,6 +569,7 @@ filter_to_policy_area <- function(data_all, policy_area) {
 }
 
 format_write_data_download <- function(data_filter, geo_format, policy_name){
+
   # function that formats the data to be written to s3 for data download
   
   bucket_name <- Sys.getenv("s3_bucket")
@@ -543,6 +679,7 @@ create_table_by_geo <- function(data_filter, geo, policy_name) {
 }
 
 create_treemap_by_geo <- function(data_filter, geo){
+  
   # function that creates treemap by jurisdiction
   data_filter <- data_filter %>%
     filter(allocation > 0, geography == geo) %>%
@@ -668,11 +805,10 @@ chicago_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds"
                    data_filter = data_filter, 
                    geo = "Chicago")
 
-chic_rec_alt <- make_treemap_alt_text(data_all_filter, 
-                                      geo = "Chicago", 
-                                      leg_name =  c("Chicago General Obligation Bond", 
-                                                      "ARPA State and Local Fiscal Recovery Funds"))
-
+chic_rec_alt <- map(c("Chicago General Obligation Bond", "ARPA State and Local Fiscal Recovery Funds"), 
+                    make_treemap_alt_text,
+                    data_filter = data_filter,
+                    geo = "Chicago")
 
 cook_county_alt <- map(c("All", "ARPA", "ARPA State and Local Fiscal Recovery Funds", "CARES", "CRRSAA"),
                    make_treemap_alt_text, 
@@ -1952,6 +2088,7 @@ chicago_summary <- chicago_zip_totals %>%
                                                  list(width = '60px', targets = c(1)))),
                 caption = "Chicago Citywide Characteristics") %>%
    DT::formatStyle(columns = c(1, 2), fontSize = '9pt')
+
 ```
 
 <br> <br>
