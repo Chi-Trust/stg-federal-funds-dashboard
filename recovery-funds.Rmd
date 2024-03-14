@@ -303,7 +303,7 @@ plot_funds_by_geo_topic <- function(data, fill_var){
      unique()
    
    fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
-                    "#387ECF", "#FDBB30", "grey")[1:length(fill_breaks)]
+                    "#387ECF", "#FDBB30")[1:length(fill_breaks)]
    
    title_var <- "Subtopic"
  }
@@ -555,7 +555,7 @@ plot_funds_by_geo <- function(data, fill_var){
        unique()
    
      fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
-                    "#387ECF", "#FDBB30", "grey")[1:length(fill_breaks)]
+                    "#387ECF", "#FDBB30")[1:length(fill_breaks)]
      
      title_var <- "Subtopic"
  }
