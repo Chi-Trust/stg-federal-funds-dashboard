@@ -36,6 +36,8 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 ```{r, echo = FALSE}
 cur_date <- Sys.Date()
+latest_slfrf_year <- 2023
+latest_slfrf_qtr <- "Q3"
 ```
 
 <center>**Last Updated:** `r cur_date`</center>
@@ -131,11 +133,14 @@ total_fed_updated_date <- "2022-08-26"
 
 
 # Read in main program tracker
-#data <- read_excel(here("data", "CCT Dashboard - Program Tracker.xlsx"), 
-#                   sheet = "Programs") %>%
-data_all <- read_csv(here("data", "cct_dashboard_data.csv"),locale = locale(encoding = 'UTF-8')) %>%
+
+data_all <- read_csv(
+  "https://urbanorg.box.com/shared/static/c603hjkqu017zntbmmh6tsxr61yawuu9.csv",
+  locale = locale(encoding = 'UTF-8')
+  ) %>%
   janitor::clean_names() %>%
-  # create variable to indicate if program is expired, if expiration is NA, treat as not expired
+  # create variable to indicate if program is expired, 
+  # if expiration is NA, treat as not expired
   # because this indicates available until expended
   mutate(
     expiration = if_else(
@@ -143,18 +148,24 @@ data_all <- read_csv(here("data", "cct_dashboard_data.csv"),locale = locale(enco
       NA_Date_,
       mdy(expiration)
     ),
-    across(c(allocation, adopted_budget_per_treasury_report, total_cumulative_obligation, total_cumulative_expenditures, amount_exact),
-           ~ parse_number(.x)),
+    across(
+      c(allocation, 
+        adopted_budget_per_treasury_report, 
+        total_cumulative_obligation, 
+        total_cumulative_expenditures, 
+        amount_exact),
+      ~ parse_number(.x)),
     is_expired = if_else(expiration > cur_date, 0, 1),
     is_expired = if_else(is.na(is_expired), 0, is_expired),
     expiration = if_else(is.na(expiration), 
                          "Available Until Expended", 
                          as.character(expiration)),
     current_as_of = mdy(current_as_of),
-    topic = if_else(new_topic == "All", 
-                    "State/Local Discretionary Funding", 
-                    new_topic),
-    subtopic = str_to_title(if_else(new_topic == "All", 
+    new_topic = case_when(
+      new_topic == "All" ~"State/Local Discretionary Funding", 
+      new_topic == "Household Investements" ~ "Household Investment",
+      T ~ new_topic),
+    new_subtopic = str_to_title(if_else(new_subtopic == "All", 
                                     "State/Local Discretionary Funding", 
                                     new_subtopic)),
     source = if_else(!is.na(source), 
@@ -163,9 +174,11 @@ data_all <- read_csv(here("data", "cct_dashboard_data.csv"),locale = locale(enco
   #filter out ARPA flexible funds because captured elsewhere
   filter(!(legislation == "ARPA" & topic == "State/Local Discretionary Funding"),
          !legislation == "IIJA", 
-         !is.na(topic)) %>%
+         !is.na(new_topic)) %>%
   #filter out FTA grants because go to transit agencies
-  filter(program != "Federal Transit Administration (FTA) Grants")
+  filter(program != "Federal Transit Administration (FTA) Grants") %>%
+  select(-topic, -subtopic) %>%
+  rename("topic" = "new_topic", "subtopic" = "new_subtopic")
 
 # filter out Chicago General Obligation Bond to use in most dashboard elements
 data <- data_all %>% 
@@ -290,7 +303,7 @@ plot_funds_by_geo_topic <- function(data, fill_var){
      unique()
    
    fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
-                    "#387ECF", "#FDBB30")[1:length(fill_breaks)]
+                    "#387ECF", "#FDBB30", "grey")[1:length(fill_breaks)]
    
    title_var <- "Subtopic"
  }
@@ -343,7 +356,7 @@ plot_funds_by_geo_topic <- function(data, fill_var){
 
 data_filter <- data %>%
   filter(geography == "Chicago", !is.na(allocation)) %>% 
-  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
+  select(legislation, program, topic, subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -358,7 +371,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 data_filter <- data %>%
   filter(geography == "Cook County", !is.na(allocation)) %>% 
-  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
+  select(legislation, program, topic, subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -373,7 +386,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 data_filter <- data %>%
   filter(geography == "Illinois", !is.na(allocation)) %>% 
-  select(legislation, program, topic = new_topic, subtopic = new_subtopic, allocation)
+  select(legislation, program, topic, subtopic, allocation)
 
 
 plot_funds_by_geo_topic(data_filter, "legislation")
@@ -487,7 +500,7 @@ obligated_funds_by_geo <- function(geo){
 data_all %>%
     filter(geography == {{geo}}) %>% 
   mutate(pct_obligated_funds_spent = total_cumulative_expenditures / adopted_budget_per_treasury_report) %>% 
-  select(geography, legislation, topic = new_topic, subtopic = new_subtopic, pct_obligated_funds_spent) %>% 
+  select(geography, legislation, topic, subtopic, pct_obligated_funds_spent) %>% 
   mutate(pct_obligated_funds_spent = scales::percent(round(pct_obligated_funds_spent, 2))) %>% 
   DT::datatable(width = "250px",
                 colnames = c("Jurisdiction" = "geography",
@@ -542,7 +555,7 @@ plot_funds_by_geo <- function(data, fill_var){
        unique()
    
      fill_values <- c("#47c3d3", "#C1D82F", "#6C5893", "#000000", 
-                    "#387ECF", "#FDBB30")[1:length(fill_breaks)]
+                    "#387ECF", "#FDBB30", "grey")[1:length(fill_breaks)]
      
      title_var <- "Subtopic"
  }
