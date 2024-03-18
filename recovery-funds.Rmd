@@ -84,11 +84,16 @@ set_urbn_defaults(style = "print", base_size = 12)
 pc_font_path <- "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
 mac_font_path <- "~/Library/Fonts"
 
+
 font_import(
   paths = mac_font_path,
   pattern = "Merriweather",
   prompt = FALSE
 )
+
+```
+
+```{r read_data, echo = FALSE, include=FALSE}
 
 # Define total federal allocations for Chicago, Cook County, Illinois
 
@@ -405,17 +410,16 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 # Explore ARPA State and Local Fiscal Recovery Funds Spending
 
-## Compare spending between the original recovery plan and spending to date by policy topic {.tabset .tabset-pills}
+## Compare spending between the original allocations and spending to date by policy topic {.tabset .tabset-pills}
 
 ### Chicago 
 
-```{r}
-data_filter <- data %>%
-  filter(
-    geography == "Chicago", !is.na(allocation),
-    legislation == "ARPA State and Local Fiscal Recovery Funds"
-  ) %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
+
+```{r fig.width = 10, fig.height = 6}
+data_filter <- data %>% 
+  filter(geography == "Chicago", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
 
 plot_difference_in_allocation_vs_spending <- function(data) {
   original_allocations <-
@@ -475,26 +479,24 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 ### Cook County
 
-```{r}
-data_filter <- data %>%
-  filter(
-    geography == "Cook County", !is.na(allocation),
-    legislation == "ARPA State and Local Fiscal Recovery Funds"
-  ) %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
+
+```{r fig.width = 10, fig.height = 6}
+data_filter <- data %>% 
+  filter(geography == "Cook County", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
 
 plot_difference_in_allocation_vs_spending(data_filter)
 ```
 
 ### Illinois
 
-```{r}
-data_filter <- data %>%
-  filter(
-    geography == "Illinois", !is.na(allocation),
-    legislation == "ARPA State and Local Fiscal Recovery Funds"
-  ) %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
+
+```{r fig.width = 10, fig.height = 6}
+data_filter <- data %>% 
+  filter(geography == "Illinois", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
 
 plot_difference_in_allocation_vs_spending(data_filter)
 ```
@@ -959,7 +961,7 @@ create_treemap_by_geo(
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_chicago.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_chicago_stg.zip)
 
 ```{r}
 create_table_by_geo(data_all_filter, "Chicago", "community_investment")
@@ -1013,7 +1015,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Cook Cou
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_cook_county.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_cook_county_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Cook County", "community_investment")
@@ -1065,7 +1067,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Illinois
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_illinois.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_illinois_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Illinois", "community_investment")
@@ -1073,7 +1075,7 @@ create_table_by_geo(data_filter, "Illinois", "community_investment")
 
 #### Total
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_total.zip)=
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_investment_total_stg.zip)=
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "community_investment")
@@ -1192,7 +1194,7 @@ create_treemap_by_geo(
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_chicago.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_chicago_stg.zip)
 
 ```{r}
 create_table_by_geo(data_all_filter, "Chicago", "community_safety")
@@ -1246,7 +1248,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Cook Cou
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_cook_county.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_cook_county_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Cook County", "community_safety")
@@ -1298,7 +1300,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Illinois
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_illinois.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_illinois_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Illinois", "community_safety")
@@ -1306,7 +1308,7 @@ create_table_by_geo(data_filter, "Illinois", "community_safety")
 
 #### Total
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_total.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/community_safety_total_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "community_safety")
@@ -1425,7 +1427,7 @@ create_treemap_by_geo(
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_chicago.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_chicago_stg.zip)
 
 ```{r}
 create_table_by_geo(data_all_filter, "Chicago", "household_investment")
@@ -1479,7 +1481,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Cook Cou
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_cook_county.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_cook_county_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Cook County", "household_investment")
@@ -1531,7 +1533,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Illinois
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_illinois.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_illinois_stg.zip)
 
 ```{r, fig.width = 10, fig.height = 6}
 create_table_by_geo(data_filter, "Illinois", "household_investment")
@@ -1539,7 +1541,7 @@ create_table_by_geo(data_filter, "Illinois", "household_investment")
 
 #### Total
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_total.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/household_investment_total_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "household_investment")
@@ -1658,7 +1660,7 @@ create_treemap_by_geo(
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_chicago.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_chicago_stg.zip)
 
 ```{r}
 create_table_by_geo(data_all_filter, "Chicago", "housing")
@@ -1712,7 +1714,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Cook Cou
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_cook_county.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_cook_county_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Cook County", "housing")
@@ -1764,7 +1766,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Illinois
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_illinois.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_illinois_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Illinois", "housing")
@@ -1772,7 +1774,7 @@ create_table_by_geo(data_filter, "Illinois", "housing")
 
 #### Total
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_total.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/housing_total_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "housing")
@@ -1894,7 +1896,7 @@ create_treemap_by_geo(
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_chicago.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_chicago_stg.zip)
 
 ```{r}
 create_table_by_geo(data_all_filter, "Chicago", "workforce_development")
@@ -1948,7 +1950,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Cook Cou
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_cook_county.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_cook_county_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Cook County", "workforce_development")
@@ -2000,7 +2002,7 @@ create_treemap_by_geo(data_filter %>% filter(legislation == "CRRSAA"), "Illinois
 
 ##### Programs Description
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_illinois.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_illinois_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Illinois", "workforce_development")
@@ -2008,7 +2010,7 @@ create_table_by_geo(data_filter, "Illinois", "workforce_development")
 
 #### Total
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_total.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/workforce_development_total_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "workforce_development")
@@ -2028,7 +2030,7 @@ plot_funds_by_geo(data_filter, "legislation")
 
 ### Explore the specific programs:
 
-[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/state_local_discretionary_total.zip)
+[Download the data (.zip)](https://federal-funds-equity.s3.amazonaws.com/state_local_discretionary_total_stg.zip)
 
 ```{r}
 create_table_by_geo(data_filter, "Total", "state_local_discretionary")
