@@ -880,7 +880,13 @@ plot_expended_slfrf <- function(.data, geography) {
     ) |>
     filter(geography == {{ geography }}) |>
     ggplot() +
-    geom_col(mapping = aes(x = topic, y = pct_expended), fill = "#47c3d3") +
+    geom_col(
+      mapping = aes(
+        x = reorder(topic, pct_expended),
+        y = pct_expended
+      ),
+      fill = "#47c3d3"
+    ) +
     coord_flip() +
     scale_y_continuous(labels = scales::label_percent()) +
     labs(
