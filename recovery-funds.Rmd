@@ -875,9 +875,13 @@ plot_expended_slfrf <- function(.data, geography) {
     filter(legislation == "ARPA State and Local Fiscal Recovery Funds") |>
     mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
     summarise(
-      pct_expended = mean(pct_expended, na.rm = TRUE),
+      across(
+        .cols = c(total_cumulative_expenditures, adopted_budget_per_treasury_report),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      ),
       .by = c("geography", "topic")
     ) |>
+    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
     filter(geography == {{ geography }}) |>
     ggplot() +
     geom_col(
