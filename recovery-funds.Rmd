@@ -101,7 +101,7 @@ font_import(
 )
 ```
 
-```{r read_data, echo = FALSE, include=FALSE}
+```{r, define-allocations}
 # Define total federal allocations for Chicago, Cook County, Illinois
 
 il_total_fed_allocation <- read_excel(here("data", "cook_county_il_total_fed_appropriations.xlsx"),
@@ -139,8 +139,9 @@ chicago_total_fed_allocation <- read_excel(here("data", "chicago_total_fed_appro
 
 chicago_total_fed_allocation_b <- round(chicago_total_fed_allocation / 1000000000, 2)
 total_fed_updated_date <- "2022-08-26"
+```
 
-
+```{r read_data, echo = FALSE, include=FALSE}
 # Read in main program tracker
 # data <- read_excel(here("data", "CCT Dashboard - Program Tracker.xlsx"),
 #                   sheet = "Programs") %>%
