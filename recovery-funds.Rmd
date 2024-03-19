@@ -83,18 +83,24 @@ set_urbn_defaults(style = "print", base_size = 12)
 
 pc_font_path <- "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
 mac_font_path <- "~/Library/Fonts"
-
+font_path <-
+  switch(Sys.info()[["sysname"]],
+    Windows = {
+      "C:/Users/astern/AppData/Local/Microsoft/Windows/Fonts/"
+    },
+    Darwin = {
+      "~/Library/Fonts"
+    }
+  )
 
 font_import(
-  paths = mac_font_path,
+  paths = font_path,
   pattern = "Merriweather",
   prompt = FALSE
 )
-
 ```
 
 ```{r read_data, echo = FALSE, include=FALSE}
-
 # Define total federal allocations for Chicago, Cook County, Illinois
 
 il_total_fed_allocation <- read_excel(here("data", "cook_county_il_total_fed_appropriations.xlsx"),
@@ -416,10 +422,12 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 
 ```{r fig.width = 10, fig.height = 6}
-data_filter <- data %>% 
-  filter(geography == "Chicago", !is.na(allocation),
-         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+data_filter <- data %>%
+  filter(
+    geography == "Chicago", !is.na(allocation),
+    legislation == "ARPA State and Local Fiscal Recovery Funds"
+  ) %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
 
 plot_difference_in_allocation_vs_spending <- function(data) {
   original_allocations <-
@@ -481,10 +489,12 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 
 ```{r fig.width = 10, fig.height = 6}
-data_filter <- data %>% 
-  filter(geography == "Cook County", !is.na(allocation),
-         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+data_filter <- data %>%
+  filter(
+    geography == "Cook County", !is.na(allocation),
+    legislation == "ARPA State and Local Fiscal Recovery Funds"
+  ) %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
 
 plot_difference_in_allocation_vs_spending(data_filter)
 ```
@@ -493,10 +503,12 @@ plot_difference_in_allocation_vs_spending(data_filter)
 
 
 ```{r fig.width = 10, fig.height = 6}
-data_filter <- data %>% 
-  filter(geography == "Illinois", !is.na(allocation),
-         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
-  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+data_filter <- data %>%
+  filter(
+    geography == "Illinois", !is.na(allocation),
+    legislation == "ARPA State and Local Fiscal Recovery Funds"
+  ) %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
 
 plot_difference_in_allocation_vs_spending(data_filter)
 ```
