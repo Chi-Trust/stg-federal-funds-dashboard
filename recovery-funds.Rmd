@@ -143,9 +143,11 @@ total_fed_updated_date <- "2022-08-26"
 
 ```{r read_data, echo = FALSE, include=FALSE}
 # Read in main program tracker
-# data <- read_excel(here("data", "CCT Dashboard - Program Tracker.xlsx"),
-#                   sheet = "Programs") %>%
-data_all <- read_csv(here("data", "cct_dashboard_data.csv"), locale = locale(encoding = "UTF-8")) %>%
+
+data_all <-
+  read_csv(here("data", "cct_dashboard_data.csv"),
+    locale = locale(encoding = "UTF-8")
+  ) %>%
   janitor::clean_names() %>%
   # create variable to indicate if program is expired, if expiration is NA, treat as not expired
   # because this indicates available until expended
@@ -185,7 +187,7 @@ data_all <- read_csv(here("data", "cct_dashboard_data.csv"), locale = locale(enc
     !legislation == "IIJA",
     !is.na(topic)
   ) %>%
-  # filter out FTA grants because go to transit agencies
+  # filter out FTA grants because they go to transit agencies
   filter(program != "Federal Transit Administration (FTA) Grants")
 
 # filter out Chicago General Obligation Bond to use in most dashboard elements
@@ -196,8 +198,9 @@ write_csv(data_all, here("data/intermediate_data", "clean_data_dashboard.csv"))
 ```
 
 
-```{r, include=FALSE}
+```{r calculate-appropriations, include=FALSE}
 # calculate totals appropriated and percent of appropriations that are unexpired by jurisdiction
+
 total_appropriated_amt_b <- sum(data$allocation, na.rm = TRUE)
 
 il_state_allocation <- data %>%
