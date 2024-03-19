@@ -866,6 +866,46 @@ make_treemap_alt_text <- function(data_filter, geo, leg_name) {
 }
 ```
 
+
+## Percent of obligated funds spent
+
+```{r, pct-slfrf-expended}
+plot_expended_slfrf <- function(.data, geography) {
+  .data |>
+    filter(legislation == "ARPA State and Local Fiscal Recovery Funds") |>
+    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
+    summarise(
+      pct_expended = mean(pct_expended, na.rm = TRUE),
+      .by = c("geography", "topic")
+    ) |>
+    filter(geography == {{ geography }}) |>
+    ggplot() +
+    geom_col(mapping = aes(x = topic, y = pct_expended), fill = "#47c3d3") +
+    coord_flip() +
+    scale_y_continuous(labels = scales::label_percent()) +
+    labs(
+      title = "Percent of State and Local Fiscal Recovery Funds Expended by Topic",
+      x = NULL,
+      y = NULL
+    )
+}
+```
+
+### Chicago
+```{r}
+plot_expended_slfrf(data, "Chicago")
+```
+
+### Cook County
+```{r}
+plot_expended_slfrf(data, "Cook County")
+```
+
+### Illinois
+```{r}
+plot_expended_slfrf(data, "Illinois")
+```
+
 # Explore Funding by Policy Area: {.tabset .tabset-dropdown}
 
 ## Community Investment {.tabset}
