@@ -58,26 +58,27 @@ knitr::opts_chunk$set(cache = FALSE)
 knitr::opts_chunk$set(fig.height = 4)
 knitr::opts_chunk$set(fig.width = 6)
 
-library(tidyverse)
-library(readxl)
-library(here)
-library(janitor)
-library(DT)
-library(urbnthemes)
-library(extrafont)
-library(treemapify)
-library(aws.s3)
-library(dotenv)
-library(treemap)
-library(plotly)
-library(lubridate)
-library(sf)
-library(tidycensus)
-library(gridExtra)
-library(patchwork)
-library(zip)
-library(leaflet)
-library(scales)
+librarian::shelf(
+  tidyverse,
+  readxl,
+  here,
+  janitor,
+  DT,
+  UrbanInstitute / urbnthemes,
+  extrafont,
+  treemapify,
+  aws.s3,
+  treemap,
+  plotly,
+  lubridate,
+  sf,
+  tidycensus,
+  gridExtra,
+  patchwork,
+  zip,
+  leaflet,
+  scales
+)
 
 set_urbn_defaults(style = "print", base_size = 12)
 
