@@ -26,6 +26,7 @@ urbnthemes::set_urbn_defaults()
 options(scipen = 999)
 ```
 
+## REMOVE CAPACITY BUID
 ```{r}
 #| label: import-data
 #| code-summary: Read Data and Calculate Shortfall
