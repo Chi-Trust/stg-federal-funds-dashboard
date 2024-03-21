@@ -421,7 +421,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 # Explore ARPA State and Local Fiscal Recovery Funds Spending
 
-## Compare spending between the original allocations and spending to date by policy topic {.tabset .tabset-pills}
+## Compare original allocations relative to spending by policy topic {.tabset .tabset-pills}
 
 ### Chicago 
 
@@ -449,7 +449,9 @@ plot_difference_in_allocation_vs_spending <- function(data) {
     mutate(pct_difference = (total_cumulative_expenditures) / allocation)
 
   p <- ggplot(original_allocation_vs_spending) +
-    geom_col(aes(x = reorder(topic, pct_difference), y = pct_difference)) +
+    geom_col(aes(x = reorder(topic, pct_difference), y = pct_difference),
+      fill = "#47c3d3"
+    ) +
     scale_y_continuous(
       expand = expansion(mult = c(0, 0.01)),
       labels = scales::percent
@@ -516,6 +518,55 @@ data_filter <- data %>%
   select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures)
 
 plot_difference_in_allocation_vs_spending(data_filter)
+```
+
+## Explore Percent of Allocated Funds Expended by Topic {.tabset .tabset-dropdown}
+
+```{r, pct-slfrf-expended}
+plot_expended_slfrf <- function(.data, geography) {
+  .data |>
+    filter(legislation == "ARPA State and Local Fiscal Recovery Funds") |>
+    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
+    summarise(
+      across(
+        .cols = c(total_cumulative_expenditures, adopted_budget_per_treasury_report),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      ),
+      .by = c("geography", "topic")
+    ) |>
+    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
+    filter(geography == {{ geography }}) |>
+    ggplot() +
+    geom_col(
+      mapping = aes(
+        x = reorder(topic, pct_expended),
+        y = pct_expended
+      ),
+      fill = "#47c3d3"
+    ) +
+    coord_flip() +
+    scale_y_continuous(labels = scales::label_percent()) +
+    labs(
+      title = "Percent of State and Local Fiscal Recovery Funds Expended by Topic",
+      x = NULL,
+      y = NULL
+    )
+}
+```
+
+### Chicago 
+```{r}
+plot_expended_slfrf(data, "Chicago")
+```
+
+### Cook County 
+```{r}
+plot_expended_slfrf(data, "Cook County")
+```
+
+### Illinois 
+```{r}
+plot_expended_slfrf(data, "Illinois")
 ```
 
 
@@ -866,55 +917,6 @@ make_treemap_alt_text <- function(data_filter, geo, leg_name) {
 }
 ```
 
-
-## Percent of obligated funds spent
-
-```{r, pct-slfrf-expended}
-plot_expended_slfrf <- function(.data, geography) {
-  .data |>
-    filter(legislation == "ARPA State and Local Fiscal Recovery Funds") |>
-    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
-    summarise(
-      across(
-        .cols = c(total_cumulative_expenditures, adopted_budget_per_treasury_report),
-        .fns = ~ sum(.x, na.rm = TRUE)
-      ),
-      .by = c("geography", "topic")
-    ) |>
-    mutate(pct_expended = total_cumulative_expenditures / adopted_budget_per_treasury_report) |>
-    filter(geography == {{ geography }}) |>
-    ggplot() +
-    geom_col(
-      mapping = aes(
-        x = reorder(topic, pct_expended),
-        y = pct_expended
-      ),
-      fill = "#47c3d3"
-    ) +
-    coord_flip() +
-    scale_y_continuous(labels = scales::label_percent()) +
-    labs(
-      title = "Percent of State and Local Fiscal Recovery Funds Expended by Topic",
-      x = NULL,
-      y = NULL
-    )
-}
-```
-
-### Chicago
-```{r}
-plot_expended_slfrf(data, "Chicago")
-```
-
-### Cook County
-```{r}
-plot_expended_slfrf(data, "Cook County")
-```
-
-### Illinois
-```{r}
-plot_expended_slfrf(data, "Illinois")
-```
 
 # Explore Funding by Policy Area: {.tabset .tabset-dropdown}
 
