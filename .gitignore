@@ -37,3 +37,27 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+## 
+## 
+x
+# RStudio files
+.Rproj.user/
+x
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+/.quarto/
+/_site/
+x
+# R Environment Variables
+.Renviron
+
+*.js
+*.map
+
+/.quarto/
+/*_files/
+/dashboard_downloads/
+/site_libs/
