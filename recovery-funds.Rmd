@@ -31,6 +31,7 @@ librarian::shelf(
   here,
   janitor,
   DT,
+  rstudio / htmltools,
   UrbanInstitute / urbnthemes,
   extrafont,
   treemapify,
@@ -48,6 +49,9 @@ librarian::shelf(
   zoo,
   palettes
 )
+
+# remotes::install_version("sknifedatar", version = "0.1.2", repos = "http://cran.us.r-project.org")
+library(sknifedatar)
 
 set_urbn_defaults(style = "print", base_size = 12)
 
@@ -528,7 +532,6 @@ plot_expended_slfrf <- function(.data, geography) {
     coord_flip() +
     scale_y_continuous(labels = scales::label_percent()) +
     labs(
-      title = "Percent of State and Local Fiscal Recovery Funds Expended by Topic",
       x = NULL,
       y = NULL
     )
@@ -2513,7 +2516,6 @@ tf_breaks <- c(0, 500000, 1000000, 1500000, 6000000)
 
 chi_map <- make_leaflet(chicago_zip_totals, tf_breaks)
 
-library(htmltools)
 
 leaflet_grid <- tagList(list(
   tags$div(
