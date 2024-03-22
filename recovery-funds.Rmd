@@ -3,7 +3,7 @@ title: ""
 output: 
   html_document:
     number_sections: FALSE
-    self_contained: TRUE
+    self_contained: FALSE
     code_folding: none
     toc: FALSE
     toc_float: FALSE
@@ -207,6 +207,7 @@ data_all <-
   ) %>%
   # filter out FTA grants because they go to transit agencies
   filter(program != "Federal Transit Administration (FTA) Grants") |>
+  filter(topic != "State/Local Discretionary Funding") |>
   mutate(topic = if_else(topic == "Household Investements", "Household Investment", topic))
 
 
@@ -529,12 +530,16 @@ budget_gap_long <- budget_gap |>
   pivot_longer(c(adopted_budget_per_treasury_report, allocation))
 ```
 
-### Option A:
+### Option A: {.tabset .tabset-pills}
+
+#### Chicago
 
 ```{r, fig.width=10, fig.height=6}
-ggplot(budget_gap, aes(x = budget_to_allocation_gap, y = topic)) +
+budget_gap_filter <- filter(budget_gap, geography == "Chicago")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Chicago")
+
+ggplot(budget_gap_filter, aes(x = budget_to_allocation_gap, y = topic)) +
   geom_col() +
-  facet_wrap(. ~ geography, nrow = 3) +
   scale_x_continuous(labels = scales::label_dollar(
     scale = 1 / 1e6,
     accuracy = 0.1
@@ -542,11 +547,49 @@ ggplot(budget_gap, aes(x = budget_to_allocation_gap, y = topic)) +
   labs(y = NULL, x = "(Millions)")
 ```
 
-### Option B:
+
+#### Cook County
+
+```{r, fig.width=10, fig.height=6}
+budget_gap_filter <- filter(budget_gap, geography == "Cook County")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Cook County")
+
+ggplot(budget_gap_filter, aes(x = budget_to_allocation_gap, y = topic)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::label_dollar(
+    scale = 1 / 1e6,
+    accuracy = 0.1
+  )) +
+  labs(y = NULL, x = "(Millions)")
+```
+
+
+#### Illinois
+
+```{r, fig.width=10, fig.height=6}
+budget_gap_filter <- filter(budget_gap, geography == "Illinois")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Illinois")
+
+ggplot(budget_gap_filter, aes(x = budget_to_allocation_gap, y = topic)) +
+  geom_col() +
+  scale_x_continuous(labels = scales::label_dollar(
+    scale = 1 / 1e6,
+    accuracy = 0.1
+  )) +
+  labs(y = NULL, x = "(Millions)")
+```
+
+### Option B: {.tabset .tabset-pills}
+
+#### Chicago
+
 ```{r, fig.width=10, fig.height=6}
 # TODO: ADD DATA LABELS https://r-graph-gallery.com/web-extended-dumbbell-plot-ggplot2.html
 
-ggplot(budget_gap, aes(y = topic)) +
+budget_gap_filter <- filter(budget_gap, geography == "Chicago")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Chicago")
+
+ggplot(budget_gap_filter, aes(y = topic)) +
   geom_dumbbell(aes(x = adopted_budget_per_treasury_report, xend = allocation),
     dot_guide_size = 0.25, color = "darkgray", # Color of the line
     size = 1, # Line width
@@ -557,7 +600,7 @@ ggplot(budget_gap, aes(y = topic)) +
     color_xend = "#FDBB30", # Color of the X end point
     color = "#e3e2e1"
   ) + # Color of the X end point
-  geom_point(data = budget_gap_long, aes(x = value, color = name), size = 2) +
+  geom_point(data = budget_gap_long_filter, aes(x = value, color = name), size = 2) +
   scale_color_manual(
     name = "",
     labels = c("Adopted Budget", "Allocation"),
@@ -572,7 +615,71 @@ ggplot(budget_gap, aes(y = topic)) +
   )
 ```
 
-## Allocated Funds Spent by Topic {.tabset .tabset-pills}
+#### Cook County
+
+```{r, fig.width=10, fig.height=6}
+budget_gap_filter <- filter(budget_gap, geography == "Cook County")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Cook County")
+
+ggplot(budget_gap_filter, aes(y = topic)) +
+  geom_dumbbell(aes(x = adopted_budget_per_treasury_report, xend = allocation),
+    dot_guide_size = 0.25, color = "darkgray", # Color of the line
+    size = 1, # Line width
+    dot_guide = FALSE, # Whether to add a guide from origin to X or not
+    size_x = 2, # Size of the X point
+    size_xend = 2, # Size of the X end point
+    color_x = "#387ECF", # Color of the X point
+    color_xend = "#FDBB30", # Color of the X end point
+    color = "#e3e2e1"
+  ) + # Color of the X end point
+  geom_point(data = budget_gap_long_filter, aes(x = value, color = name), size = 2) +
+  scale_color_manual(
+    name = "",
+    labels = c("Adopted Budget", "Allocation"),
+    values = c("#387ECF", "#FDBB30")
+  ) +
+  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e6)) +
+  facet_wrap(. ~ geography, nrow = 3) +
+  theme(legend.position = "bottom") +
+  labs(
+    x = "(Millions)",
+    y = NULL
+  )
+```
+
+#### Illinois
+
+```{r, fig.width=10, fig.height=6}
+budget_gap_filter <- filter(budget_gap, geography == "Illinois")
+budget_gap_long_filter <- filter(budget_gap_long, geography == "Illinois")
+
+ggplot(budget_gap_filter, aes(y = topic)) +
+  geom_dumbbell(aes(x = adopted_budget_per_treasury_report, xend = allocation),
+    dot_guide_size = 0.25, color = "darkgray", # Color of the line
+    size = 1, # Line width
+    dot_guide = FALSE, # Whether to add a guide from origin to X or not
+    size_x = 2, # Size of the X point
+    size_xend = 2, # Size of the X end point
+    color_x = "#387ECF", # Color of the X point
+    color_xend = "#FDBB30", # Color of the X end point
+    color = "#e3e2e1"
+  ) + # Color of the X end point
+  geom_point(data = budget_gap_long_filter, aes(x = value, color = name), size = 2) +
+  scale_color_manual(
+    name = "",
+    labels = c("Adopted Budget", "Allocation"),
+    values = c("#387ECF", "#FDBB30")
+  ) +
+  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e6)) +
+  facet_wrap(. ~ geography, nrow = 3) +
+  theme(legend.position = "bottom") +
+  labs(
+    x = "(Millions)",
+    y = NULL
+  )
+```
+
+## Cumulative Expenditures Relative to Adopted Budget {.tabset .tabset-pills}
 
 ```{r, pct-slfrf-expended}
 plot_expended_slfrf <- function(.data, geography) {
