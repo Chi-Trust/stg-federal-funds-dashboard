@@ -9,4 +9,4 @@ site_pages <- c(
   "index.Rmd"
 )
 
-walk(site_pages, ~ rmarkdown::render(.x, "html_document"), clean = TRUE)
+walk(site_pages, ~ rmarkdown::render(.x, "html_document"))
