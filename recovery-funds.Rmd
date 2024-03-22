@@ -734,10 +734,10 @@ plot_expended_slfrf(data, "Illinois")
 ```{r read-quarterly-data}
 data_ts <- readxl::read_excel(here("data", "arpa-spending-quarterly.xlsx")) |>
   janitor::clean_names() |>
+  mutate(dashboard_topic = if_else(dashboard_topic == "Household Investements", "Household Investment", dashboard_topic)) |>
   mutate(across(matches("total|expenditure|budget"), ~ as.numeric(.x))) |>
-  filter(str_detect(funding_source, "ARPA")) |>
-  filter(cct_track == "Yes") |>
   filter(completion_status != "Cancelled") |>
+  # filter out ARPA flexible funds because captured elsewhere
   select(
     date = report_period, geography, agency,
     topic = dashboard_topic,
@@ -760,12 +760,12 @@ data_ts <- readxl::read_excel(here("data", "arpa-spending-quarterly.xlsx")) |>
 plot_spending_by_quarter <- function(.data, geography) {
   .data |>
     ggplot(aes(x = date, y = pct_expended_budget, color = topic)) +
-    geom_line(size = 1, alpha = 0.8) +
+    geom_line(size = 1, alpha = 0.9) +
     zoo::scale_x_yearqtr(
       format = "%Y-Q%q",
       breaks = seq(from = min(data_ts$date), to = max(data_ts$date), by = 0.25)
     ) +
-    geom_point(alpha = 0.8) +
+    geom_point(alpha = 0.9) +
     scale_y_continuous(labels = scales::label_percent()) +
     scale_color_palette_d(palette$cct) +
     labs(x = NULL, y = NULL) +
