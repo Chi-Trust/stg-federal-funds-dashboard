@@ -206,7 +206,7 @@ data_all <-
   ) %>%
   # filter out FTA grants because they go to transit agencies
   filter(program != "Federal Transit Administration (FTA) Grants") |>
-  mutate(topic = if_else(topic == "Household Investements", "Household Investement", topic))
+  mutate(topic = if_else(topic == "Household Investements", "Household Investment", topic))
 
 
 # filter out Chicago General Obligation Bond to use in most dashboard elements
