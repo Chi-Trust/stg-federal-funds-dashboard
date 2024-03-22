@@ -30,6 +30,7 @@ librarian::shelf(
   readxl,
   here,
   janitor,
+  ggalt,
   DT,
   rstudio / htmltools,
   UrbanInstitute / urbnthemes,
@@ -504,6 +505,69 @@ xaringanExtra::use_panelset()
 
 `r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")`
 
+## Gap Between Allocations and Adopted Budget 
+
+```{r}
+budget_gap <-
+  data |>
+  select(geography, legislation, topic, subtopic, allocation, adopted_budget_per_treasury_report) |>
+  summarise(
+    across(
+      .cols = c(adopted_budget_per_treasury_report, allocation),
+      .fns = ~ sum(.x, na.rm = TRUE)
+    ),
+    .by = c("geography", "topic")
+  ) |>
+  mutate(
+    budget_to_allocation_gap = adopted_budget_per_treasury_report - allocation
+  ) |>
+  filter(topic != "Capacity Building")
+
+budget_gap_long <- budget_gap |>
+  pivot_longer(c(adopted_budget_per_treasury_report, allocation))
+```
+
+### Option A:
+
+```{r, fig.width=10, fig.height=6}
+ggplot(budget_gap, aes(x = budget_to_allocation_gap, y = topic)) +
+  geom_col() +
+  facet_wrap(. ~ geography, nrow = 3) +
+  scale_x_continuous(labels = scales::label_dollar(
+    scale = 1 / 1e9, suffix = "B",
+    accuracy = 0.1
+  ))
+```
+
+### Option B:
+```{r, fig.width=10, fig.height=6}
+# TODO: ADD DATA LABELS https://r-graph-gallery.com/web-extended-dumbbell-plot-ggplot2.html
+
+ggplot(budget_gap, aes(y = topic)) +
+  geom_dumbbell(aes(x = adopted_budget_per_treasury_report, xend = allocation),
+    dot_guide_size = 0.25, color = "darkgray", # Color of the line
+    size = 1, # Line width
+    dot_guide = FALSE, # Whether to add a guide from origin to X or not
+    size_x = 2, # Size of the X point
+    size_xend = 2, # Size of the X end point
+    color_x = "#387ECF", # Color of the X point
+    color_xend = "#FDBB30", # Color of the X end point
+    color = "#e3e2e1"
+  ) + # Color of the X end point
+  geom_point(data = budget_gap_long, aes(x = value, color = name), size = 2) +
+  scale_color_manual(
+    name = "",
+    labels = c("Adopted Budget", "Allocation"),
+    values = c("#387ECF", "#FDBB30")
+  ) +
+  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e9, suffix = "B")) +
+  facet_wrap(. ~ geography, nrow = 3) +
+  theme(legend.position = "bottom") +
+  labs(
+    x = NULL,
+    y = NULL
+  )
+```
 
 ## Allocated Funds Spent by Topic {.tabset .tabset-pills}
 
