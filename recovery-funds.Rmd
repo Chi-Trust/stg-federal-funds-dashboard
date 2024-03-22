@@ -472,7 +472,9 @@ plot_difference_in_allocation_vs_spending <- function(data, geography) {
       labels = scales::percent
     ) +
     labs(
-      y = "Percentage share of expenditures relative to original allocation"
+      x = NULL,
+      title = NULL,
+      y = "Share of expenditures relative to original allocation"
     ) +
     coord_flip() +
     theme(
@@ -534,9 +536,10 @@ ggplot(budget_gap, aes(x = budget_to_allocation_gap, y = topic)) +
   geom_col() +
   facet_wrap(. ~ geography, nrow = 3) +
   scale_x_continuous(labels = scales::label_dollar(
-    scale = 1 / 1e9, suffix = "B",
+    scale = 1 / 1e6,
     accuracy = 0.1
-  ))
+  )) +
+  labs(y = NULL, x = "(Millions)")
 ```
 
 ### Option B:
@@ -560,11 +563,11 @@ ggplot(budget_gap, aes(y = topic)) +
     labels = c("Adopted Budget", "Allocation"),
     values = c("#387ECF", "#FDBB30")
   ) +
-  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e9, suffix = "B")) +
+  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e6)) +
   facet_wrap(. ~ geography, nrow = 3) +
   theme(legend.position = "bottom") +
   labs(
-    x = NULL,
+    x = "(Millions)",
     y = NULL
   )
 ```
