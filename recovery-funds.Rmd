@@ -659,8 +659,8 @@ ggplot(budget_gap_filter, aes(y = topic)) +
     dot_guide_size = 0.25, color = "darkgray", # Color of the line
     size = 1, # Line width
     dot_guide = FALSE, # Whether to add a guide from origin to X or not
-    size_x = 2, # Size of the X point
-    size_xend = 2, # Size of the X end point
+    size_x = 3, # Size of the X point
+    size_xend = 3, # Size of the X end point
     color_x = "#387ECF", # Color of the X point
     color_xend = "#FDBB30", # Color of the X end point
     color = "#e3e2e1"
@@ -755,7 +755,8 @@ data_ts <- readxl::read_excel(here("data", "arpa-spending-quarterly.xlsx")) |>
   mutate(
     pct_expended_budget = total_expenditures / adopted_budget,
     pct_expended_obligations = total_expenditures / total_obligations
-  )
+  ) |>
+  drop_na(topic)
 
 plot_spending_by_quarter <- function(.data, geography) {
   .data |>
@@ -767,7 +768,7 @@ plot_spending_by_quarter <- function(.data, geography) {
     ) +
     geom_point(alpha = 0.9) +
     scale_y_continuous(labels = scales::label_percent()) +
-    scale_color_palette_d(palette$cct) +
+    # scale_color_palette_d(palette$cct) +
     labs(x = NULL, y = NULL) +
     guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     theme(
@@ -791,6 +792,7 @@ plot_spending_by_quarter <- function(.data, geography) {
 nested_data <-
   data_ts |>
   select(geography, date, topic, pct_expended_budget) |>
+  arrange(geography) |>
   nest(.by = c(geography), .key = "ts") |>
   mutate(ts_plots = map(
     ts,
