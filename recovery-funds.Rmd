@@ -10,6 +10,7 @@ output:
     css: !expr here::here("www", "web_report_trust.css")
 fig.width: 10
 fig.height: 6
+editor: source
 editor_options:
   chunk_output_type: console
   markdown: 
@@ -48,11 +49,12 @@ librarian::shelf(
   scales,
   zoo,
   palettes,
-  xaringanExtra
+  xaringanExtra,
+  dotenv
 )
 
 # remotes::install_version("sknifedatar", version = "0.1.2", repos = "http://cran.us.r-project.org")
-#library(sknifedatar)
+library(sknifedatar)
 
 set_urbn_defaults(style = "print", base_size = 12)
 
@@ -423,8 +425,9 @@ plot_funds_by_geo_topic <- function(data, fill_var) {
 # Federal Recovery Funding by Jurisdiction and Topic {.tabset .tabset-pills}
 
 ## Chicago
+{r, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
 
-```{r, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
+```{r chichunk}
 data_filter <- data %>%
   filter(geography == "Chicago", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -437,7 +440,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ## Cook County
 
-```{r, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Cook County showing largest allocation to state and local discretionary funds, followed by housing programs."}
+```{r c2, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Cook County showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
   filter(geography == "Cook County", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -450,7 +453,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ## Illinois
 
-```{r, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Illinois showing largest allocation to state and local discretionary funds, followed by housing programs."}
+```{r c3, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Illinois showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
   filter(geography == "Illinois", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -465,7 +468,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ## Current Spending Compared to Original Allocations {.tabset .tabset-pills}
 
-```{r}
+```{r c4}
 plot_difference_in_allocation_vs_spending <- function(data, geography) {
   original_allocations <-
     data %>%
@@ -520,15 +523,15 @@ allocations_vs_spending <-
   ungroup()
 ```
 
-```{r}
+```{r c5, eval=FALSE}
 xaringanExtra::use_panelset()
 ```
 
-`r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")`
+r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")
 
 ## Gap Between Allocations and Adopted Budget
 
-```{r}
+```{r c6}
 budget_gap <-
   data |>
   select(geography, legislation, topic, subtopic, allocation, adopted_budget_per_treasury_report) |>
@@ -552,7 +555,7 @@ budget_gap_long <- budget_gap |>
 
 #### Chicago
 
-```{r, fig.width=10, fig.height=6}
+```{r c7, fig.width=10, fig.height=6}
 budget_gap_filter <- filter(budget_gap, geography == "Chicago")
 budget_gap_long_filter <- filter(budget_gap_long, geography == "Chicago")
 
@@ -817,11 +820,11 @@ nested_data <-
   ))
 ```
 
-```{r}
+```{r, eval=FALSE}
 xaringanExtra::use_panelset()
 ```
 
-`r sknifedatar::automagic_tabs(input_data = nested_data, panel_name = "geography", .output = "ts_plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6)`
+r sknifedatar::automagic_tabs(input_data = nested_data, panel_name = "geography", .output = "ts_plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6)
 
 # Explore Funding by Policy Area {.tabset .tabset-dropdown}
 
@@ -2920,7 +2923,7 @@ make_leaflet_arpa <- function(chicago_zip_totals, col_breaks) {
     chicago_map_data$funds_total_fm,
     chicago_map_data$funds_per_capita,
     chicago_map_data$payment_total_fm,
-    chicago_map_data$all_payment
+    chicago_map_data$all_pct_paid
   ) %>%
     lapply(htmltools::HTML)
 
@@ -2991,6 +2994,8 @@ leaflet_grid <- tagList(list(
 leaflet_grid
 
 ```
+
+$~$
 
 ### ARPA SLFRF Projects by Zip Code
 
