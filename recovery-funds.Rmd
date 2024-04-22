@@ -283,29 +283,29 @@ pct_cook_county_unexp_b <- cook_county_unexp_b / cook_county_allocation_b
 ```
 
 ```{r}
-
 download.file(
   url = "https://urbanorg.box.com/shared/static/2q3bncj3izzme47s84b45brnlmc9aku8.xlsx",
   destfile = here("data/zip_data.xlsx"),
   mode = "wb"
-  )
+)
 
 zip_data <- read_excel(here("data/zip_data.xlsx")) %>%
   janitor::clean_names() %>%
   group_by(project_name, recipient_name, project_title, contract_po_number, zipcode) %>%
   # all award amount entries are the same
   # some zip codes have multiple contracts in the same project, we sum across
-  summarise(award_amount = max(award_amount),
-            total_payment = sum(payment_amount, na.rm = TRUE)) %>%
+  summarise(
+    award_amount = max(award_amount),
+    total_payment = sum(payment_amount, na.rm = TRUE)
+  ) %>%
   group_by(project_name, recipient_name, project_title, zipcode) %>%
   summarise(
     award_amount = sum(award_amount),
     total_payment = sum(total_payment),
-    pct_paid = scales::percent(total_payment/award_amount)
-    ) %>%
+    pct_paid = scales::percent(total_payment / award_amount)
+  ) %>%
   ungroup() %>%
   mutate(zipcode = as.character(zipcode))
-
 ```
 
 # Summary of Federal COVID-19 Recovery Funding
@@ -425,9 +425,8 @@ plot_funds_by_geo_topic <- function(data, fill_var) {
 # Federal Recovery Funding by Jurisdiction and Topic {.tabset .tabset-pills}
 
 ## Chicago
-{r, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
 
-```{r chichunk}
+```{r chichunk, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
 data_filter <- data %>%
   filter(geography == "Chicago", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -523,11 +522,11 @@ allocations_vs_spending <-
   ungroup()
 ```
 
-```{r c5, eval=FALSE}
+```{r c5}
 xaringanExtra::use_panelset()
 ```
 
-r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")
+`r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")`
 
 ## Gap Between Allocations and Adopted Budget
 
@@ -820,11 +819,11 @@ nested_data <-
   ))
 ```
 
-```{r, eval=FALSE}
+```{r}
 xaringanExtra::use_panelset()
 ```
 
-r sknifedatar::automagic_tabs(input_data = nested_data, panel_name = "geography", .output = "ts_plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6)
+`r sknifedatar::automagic_tabs(input_data = nested_data, panel_name = "geography", .output = "ts_plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6)`
 
 # Explore Funding by Policy Area {.tabset .tabset-dropdown}
 
@@ -2880,7 +2879,6 @@ leaflet_grid
 ## ARPA SLFRF
 
 ```{r}
-
 make_leaflet_arpa <- function(chicago_zip_totals, col_breaks) {
   labs <- make_labels(col_breaks)
 
@@ -2959,10 +2957,12 @@ make_leaflet_arpa <- function(chicago_zip_totals, col_breaks) {
 }
 
 arpa_slfrf_totals <- zip_data %>%
-   group_by(zipcode) %>%
-  summarize(all_award = sum(award_amount),
-            all_payment = sum(total_payment),
-            all_pct_paid = scales::percent(all_payment/all_award)) %>%
+  group_by(zipcode) %>%
+  summarize(
+    all_award = sum(award_amount),
+    all_payment = sum(total_payment),
+    all_pct_paid = scales::percent(all_payment / all_award)
+  ) %>%
   ungroup() %>%
   left_join(chicago_pop_zip, by = c("zipcode" = "geography")) %>%
   mutate(funds_per_capita = all_award / population_total)
@@ -2992,7 +2992,6 @@ leaflet_grid <- tagList(list(
 ))
 
 leaflet_grid
-
 ```
 
 $~$
@@ -3002,12 +3001,14 @@ $~$
 ```{r}
 zip_data %>%
   select(-project_title) %>%
-  rename("Project" = "project_name",
-         "Recipient" = "recipient_name",
-         "Zip" = "zipcode",
-         "Award" = "award_amount",
-         "Payments to Date" = "total_payment",
-         "% Paid" = "pct_paid") %>%
+  rename(
+    "Project" = "project_name",
+    "Recipient" = "recipient_name",
+    "Zip" = "zipcode",
+    "Award" = "award_amount",
+    "Payments to Date" = "total_payment",
+    "% Paid" = "pct_paid"
+  ) %>%
   DT::datatable(
     caption = htmltools::tags$caption(
       style = "caption-side: bottom; text-align: left",
@@ -3015,6 +3016,5 @@ zip_data %>%
     ),
     options = list(dom = "t"),
     rownames = FALSE
-  ) 
-
+  )
 ```
