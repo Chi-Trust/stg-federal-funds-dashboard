@@ -10,12 +10,12 @@ output:
     css: !expr here::here("www", "web_report_trust.css")
 fig.width: 10
 fig.height: 6
+editor: source
 editor_options:
   chunk_output_type: console
   markdown: 
     wrap: 72
 ---
-
 
 ```{r setup, echo = FALSE, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE)
@@ -48,7 +48,9 @@ librarian::shelf(
   leaflet,
   scales,
   zoo,
-  palettes
+  palettes,
+  xaringanExtra,
+  dotenv
 )
 
 # remotes::install_version("sknifedatar", version = "0.1.2", repos = "http://cran.us.r-project.org")
@@ -99,7 +101,6 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 </center>
 
-
 <br>
 
 ```{r, echo = FALSE}
@@ -117,7 +118,6 @@ Federal COVID-19 pandemic-response packages have provided unprecedented aid to s
 We will add more program allocation and spending information as new data become available. For more information, including the **glossary and frequently asked questions**, see [About the Dashboard]{#sec-about} below.
 
 <br> <br>
-
 
 ```{r, define-allocations}
 # Define total federal allocations for Chicago, Cook County, Illinois
@@ -218,7 +218,6 @@ data <- data_all %>%
 write_csv(data_all, here("data/intermediate_data", "clean_data_dashboard.csv"))
 ```
 
-
 ```{r calculate-appropriations, include=FALSE}
 # calculate totals appropriated and percent of appropriations that are unexpired by jurisdiction
 
@@ -281,6 +280,32 @@ il_unexp_b <- round(il_unexp / 1000000000, 2)
 pct_il_unexp_b <- il_unexp_b / il_state_allocation_b
 pct_chicago_unexp_b <- chicago_unexp_b / chicago_allocation_b
 pct_cook_county_unexp_b <- cook_county_unexp_b / cook_county_allocation_b
+```
+
+```{r}
+download.file(
+  url = "https://urbanorg.box.com/shared/static/2q3bncj3izzme47s84b45brnlmc9aku8.xlsx",
+  destfile = here("data/zip_data.xlsx"),
+  mode = "wb"
+)
+
+zip_data <- read_excel(here("data/zip_data.xlsx")) %>%
+  janitor::clean_names() %>%
+  group_by(project_name, recipient_name, project_title, contract_po_number, zipcode) %>%
+  # all award amount entries are the same
+  # some zip codes have multiple contracts in the same project, we sum across
+  summarise(
+    award_amount = max(award_amount),
+    total_payment = sum(payment_amount, na.rm = TRUE)
+  ) %>%
+  group_by(project_name, recipient_name, project_title, zipcode) %>%
+  summarise(
+    award_amount = sum(award_amount),
+    total_payment = sum(total_payment),
+    pct_paid = scales::percent(total_payment / award_amount)
+  ) %>%
+  ungroup() %>%
+  mutate(zipcode = as.character(zipcode))
 ```
 
 # Summary of Federal COVID-19 Recovery Funding
@@ -401,7 +426,7 @@ plot_funds_by_geo_topic <- function(data, fill_var) {
 
 ## Chicago
 
-```{r, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
+```{r chichunk, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
 data_filter <- data %>%
   filter(geography == "Chicago", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -414,7 +439,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ## Cook County
 
-```{r, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Cook County showing largest allocation to state and local discretionary funds, followed by housing programs."}
+```{r c2, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Cook County showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
   filter(geography == "Cook County", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -427,7 +452,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ## Illinois
 
-```{r, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Illinois showing largest allocation to state and local discretionary funds, followed by housing programs."}
+```{r c3, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Illinois showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
   filter(geography == "Illinois", !is.na(allocation)) %>%
   select(legislation, program, topic, subtopic, allocation)
@@ -438,14 +463,11 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 **Note:** The ARPA State and Local Fiscal Recovery Funds funding source captures the ARPA Fiscal Recovery Funds for Cook County, shown by their planned spending topics and subtopics according to the [Illinois ARPA Spending Plan](https://www2.illinois.gov/sites/budget/Documents/Budget%20Book/FY2022-Budget-Book/FY22_Enacted_ARPA_Summary_6.21.21.pdf). The state/local discretionary funding topic reflects CARES Coronavirus Relief Fund flexible funding for which more detailed spending is not known.
 
-
-
 # Explore ARPA State and Local Fiscal Recovery Funds Spending
-
 
 ## Current Spending Compared to Original Allocations {.tabset .tabset-pills}
 
-```{r}
+```{r c4}
 plot_difference_in_allocation_vs_spending <- function(data, geography) {
   original_allocations <-
     data %>%
@@ -500,17 +522,15 @@ allocations_vs_spending <-
   ungroup()
 ```
 
-
-
-```{r}
+```{r c5}
 xaringanExtra::use_panelset()
 ```
 
 `r sknifedatar::automagic_tabs(input_data = allocations_vs_spending, panel_name = "geography", .output = "plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6,fig.cap="This graph compares the percent of ARPA SLFRF dollars by policy topic between the original recovery plan and spending to date")`
 
-## Gap Between Allocations and Adopted Budget 
+## Gap Between Allocations and Adopted Budget
 
-```{r}
+```{r c6}
 budget_gap <-
   data |>
   select(geography, legislation, topic, subtopic, allocation, adopted_budget_per_treasury_report) |>
@@ -534,7 +554,7 @@ budget_gap_long <- budget_gap |>
 
 #### Chicago
 
-```{r, fig.width=10, fig.height=6}
+```{r c7, fig.width=10, fig.height=6}
 budget_gap_filter <- filter(budget_gap, geography == "Chicago")
 budget_gap_long_filter <- filter(budget_gap_long, geography == "Chicago")
 
@@ -546,7 +566,6 @@ ggplot(budget_gap_filter, aes(x = budget_to_allocation_gap, y = topic)) +
   )) +
   labs(y = NULL, x = "(Millions)")
 ```
-
 
 #### Cook County
 
@@ -562,7 +581,6 @@ ggplot(budget_gap_filter, aes(x = budget_to_allocation_gap, y = topic)) +
   )) +
   labs(y = NULL, x = "(Millions)")
 ```
-
 
 #### Illinois
 
@@ -712,23 +730,25 @@ plot_expended_slfrf <- function(.data, geography) {
 }
 ```
 
-### Chicago 
+### Chicago
+
 ```{r, fig.width = 10, fig.height = 6}
 plot_expended_slfrf(data, "Chicago")
 ```
 
-### Cook County 
+### Cook County
+
 ```{r, fig.width = 10, fig.height = 6}
 plot_expended_slfrf(data, "Cook County")
 ```
 
-### Illinois 
+### Illinois
+
 ```{r, fig.width = 10, fig.height = 6}
 plot_expended_slfrf(data, "Illinois")
 ```
 
 ## Spending by Quarter {.tabset .tabset-pills}
-
 
 ```{r read-quarterly-data}
 data_ts <- readxl::read_excel(here("data", "arpa-spending-quarterly.xlsx")) |>
@@ -805,11 +825,7 @@ xaringanExtra::use_panelset()
 
 `r sknifedatar::automagic_tabs(input_data = nested_data, panel_name = "geography", .output = "ts_plots", tabset_props = ".tabset-pills", is_output_distill = FALSE, fig.width=10, fig.height=6)`
 
-
-
 # Explore Funding by Policy Area {.tabset .tabset-dropdown}
-
-
 
 ```{r, include=FALSE}
 plot_funds_by_geo <- function(data, fill_var) {
@@ -2570,8 +2586,9 @@ make_sum_table <- function(grant_program,
 }
 ```
 
-<h1> </h1>
+<h1>
 
+</h1>
 
 # Explore Spending for Selected Programs: {.tabset .tabset-dropdown}
 
@@ -2857,4 +2874,147 @@ leaflet_grid <- tagList(list(
 ))
 
 leaflet_grid
+```
+
+## ARPA SLFRF
+
+```{r}
+make_leaflet_arpa <- function(chicago_zip_totals, col_breaks) {
+  labs <- make_labels(col_breaks)
+
+  chicago_map_data <- chicago_zip_totals %>%
+    mutate(
+      col_bin = factor(cut(all_award,
+        breaks = col_breaks,
+        labels = labs
+      )),
+      prop_latinx = paste0(round((population_latinx / population_total) * 100, 2), "%"),
+      prop_asian = paste0(round((population_asian_non_latinx / population_total) * 100, 2), "%"),
+      prop_black = paste0(round((population_black_non_latinx / population_total) * 100, 2), "%"),
+      prop_white = paste0(round((population_white_non_latinx / population_total) * 100, 2), "%"),
+      prop_pov = paste0(round(prop_pov * 100, 2), "%"),
+      funds_per_capita = paste0("$", round(funds_per_capita, 2)),
+      pop_total_fm = number(population_total, big.mark = ","),
+      funds_total_fm = paste0("$", number(all_award, big.mark = ",")),
+      payment_total_fm = paste0("$", number(all_payment, big.mark = ","))
+    )
+
+  # col_levels <- make_col_break_levels(levels(col_bin))
+  # chicago_map_data <- chicago_map_data %>%
+  #   mutate(col_bin_label = factor(col_bin_label,levels = col_levels))
+
+
+  pal <- colorFactor(
+    palette = c("#a5dee6", "#47c3d3", "#306074", "#000000"),
+    domain = chicago_map_data$col_bin
+  )
+
+  labels <- sprintf(
+    "<strong> Zip Code %s</strong><br/><strong>Pct Asian:</strong> %s<br/><strong>Pct Black:</strong> %s<br/><strong>Pct Latinx:</strong> %s<br/><strong>Pct White:</strong> %s<br/><strong>Pct Under Poverty Level:</strong> %s<br/><strong>Total Population:</strong> %s<br/><strong>Total Awards:</strong> %s<br/><strong>Awards Per Capita:</strong> %s<br/><strong>Total Payments to Date:</strong> %s<br/><strong>Pct Paid to Date:</strong> %s<br/>",
+    chicago_map_data$zip,
+    chicago_map_data$prop_asian,
+    chicago_map_data$prop_black,
+    chicago_map_data$prop_latinx,
+    chicago_map_data$prop_white,
+    chicago_map_data$prop_pov,
+    chicago_map_data$pop_total_fm,
+    chicago_map_data$funds_total_fm,
+    chicago_map_data$funds_per_capita,
+    chicago_map_data$payment_total_fm,
+    chicago_map_data$all_pct_paid
+  ) %>%
+    lapply(htmltools::HTML)
+
+  m <- leaflet(chicago_map_data) %>%
+    setView(-87.626, 41.869, zoom = 10) %>%
+    addTiles() %>%
+    addPolygons(
+      fillColor = ~ pal(col_bin),
+      weight = 2,
+      opacity = 0.75,
+      color = "white",
+      fillOpacity = 0.75,
+      highlightOptions = highlightOptions(
+        weight = 5,
+        color = "#000000",
+        fillOpacity = 0.75,
+        bringToFront = TRUE
+      ),
+      label = labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "12px",
+        direction = "auto"
+      )
+    ) %>%
+    addLegend("topright",
+      pal = pal, values = ~col_bin,
+      title = "Total Awards by Zip Code",
+      opacity = 1
+    )
+
+  m
+}
+
+arpa_slfrf_totals <- zip_data %>%
+  group_by(zipcode) %>%
+  summarize(
+    all_award = sum(award_amount),
+    all_payment = sum(total_payment),
+    all_pct_paid = scales::percent(all_payment / all_award)
+  ) %>%
+  ungroup() %>%
+  left_join(chicago_pop_zip, by = c("zipcode" = "geography")) %>%
+  mutate(funds_per_capita = all_award / population_total)
+
+
+
+chicago_zip_totals <- chicago_zip %>%
+  left_join(arpa_slfrf_totals, by = c("zip" = "zipcode"))
+
+chicago_zip_totals <- chicago_zip_totals %>%
+  left_join(zip_zcta, by = c("zip" = "ZIP_CODE"))
+
+chicago_zip_totals <- chicago_zip_totals %>%
+  left_join(acs_zcta, by = c("ZCTA" = "GEOID"))
+
+chi_map <- make_leaflet_arpa(chicago_zip_totals, c(0, 250000, 1500000, 5000000, 15000000))
+
+leaflet_grid <- tagList(list(
+  tags$div(
+    style = "width:630px;display:block;float:left;margin-right:30px",
+    chi_map
+  ),
+  tags$div(
+    style = "width:250px;display:block;float:left;",
+    chicago_summary
+  )
+))
+
+leaflet_grid
+```
+
+$~$
+
+### ARPA SLFRF Projects by Zip Code
+
+```{r}
+zip_data %>%
+  select(-project_title) %>%
+  rename(
+    "Project" = "project_name",
+    "Recipient" = "recipient_name",
+    "Zip" = "zipcode",
+    "Award" = "award_amount",
+    "Payments to Date" = "total_payment",
+    "% Paid" = "pct_paid"
+  ) %>%
+  DT::datatable(
+    caption = htmltools::tags$caption(
+      style = "caption-side: bottom; text-align: left",
+      "This table shows the total awards issued to external partners through competitive procurement under ARPA SLFRF. This does not represent the total ARPA SLFRF funds."
+    ),
+    options = list(dom = "t"),
+    rownames = FALSE
+  )
 ```
