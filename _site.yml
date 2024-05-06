@@ -16,5 +16,5 @@ output:
   html_document:
     output_dir: '.'
     css: !expr here::here("www", "web_report_trust.css")
-    self_contained: TRUE
+    self_contained: FALSE
 output_dir: '.'
