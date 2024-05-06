@@ -105,6 +105,8 @@ knitr::include_graphics(here::here("www", "images", "CCT_logo_centered_blue-new.
 
 ```{r, echo = FALSE}
 cur_date <- Sys.Date()
+latest_slfrf_year <- 2023
+latest_slfrf_qtr <- "Q3"
 ```
 
 <center>**Last Updated:** `r cur_date`</center>
@@ -162,12 +164,14 @@ total_fed_updated_date <- "2022-08-26"
 ```{r read_data, echo = FALSE, include=FALSE}
 # Read in main program tracker
 
-data_all <-
-  read_csv(here("data", "cct_dashboard_data.csv"),
-    locale = locale(encoding = "UTF-8")
+
+data_all <- read_csv(
+  "https://urbanorg.box.com/shared/static/c603hjkqu017zntbmmh6tsxr61yawuu9.csv",
+  locale = locale(encoding = 'UTF-8')
   ) %>%
   janitor::clean_names() %>%
-  # create variable to indicate if program is expired, if expiration is NA, treat as not expired
+  # create variable to indicate if program is expired, 
+  # if expiration is NA, treat as not expired
   # because this indicates available until expended
   mutate(
     expiration = if_else(
@@ -176,9 +180,12 @@ data_all <-
       mdy(expiration)
     ),
     across(
-      c(allocation, adopted_budget_per_treasury_report, total_cumulative_obligation, total_cumulative_expenditures, amount_exact),
-      ~ parse_number(.x)
-    ),
+      c(allocation, 
+        adopted_budget_per_treasury_report, 
+        total_cumulative_obligation, 
+        total_cumulative_expenditures, 
+        amount_exact),
+      ~ parse_number(.x)),
     is_expired = if_else(expiration > cur_date, 0, 1),
     is_expired = if_else(is.na(is_expired), 0, is_expired),
     expiration = if_else(is.na(expiration),
@@ -186,30 +193,24 @@ data_all <-
       as.character(expiration)
     ),
     current_as_of = mdy(current_as_of),
-    topic = if_else(new_topic == "All",
-      "State/Local Discretionary Funding",
-      new_topic
-    ),
-    subtopic = str_to_title(if_else(new_topic == "All",
-      "State/Local Discretionary Funding",
-      new_subtopic
-    )),
-    source = if_else(!is.na(source),
-      str_glue('<a href = "{source_url}">{source}</a>'),
-      NA_character_
-    )
-  ) %>%
-  # filter out ARPA flexible funds because captured elsewhere
-  filter(
-    !(legislation == "ARPA" & topic == "State/Local Discretionary Funding"),
-    !legislation == "IIJA",
-    !is.na(topic)
-  ) %>%
-  # filter out FTA grants because they go to transit agencies
-  filter(program != "Federal Transit Administration (FTA) Grants") |>
-  filter(topic != "State/Local Discretionary Funding") |>
-  mutate(topic = if_else(topic == "Household Investements", "Household Investment", topic))
-
+    new_topic = case_when(
+      new_topic == "All" ~"State/Local Discretionary Funding", 
+      new_topic == "Household Investements" ~ "Household Investment",
+      T ~ new_topic),
+    new_subtopic = str_to_title(if_else(new_subtopic == "All", 
+                                    "State/Local Discretionary Funding", 
+                                    new_subtopic)),
+    source = if_else(!is.na(source), 
+                     str_glue('<a href = "{source_url}">{source}</a>'),
+                     NA_character_)) %>%
+  #filter out ARPA flexible funds because captured elsewhere
+  filter(!(legislation == "ARPA" & topic == "State/Local Discretionary Funding"),
+         !legislation == "IIJA", 
+         !is.na(new_topic)) %>%
+  #filter out FTA grants because go to transit agencies
+  filter(program != "Federal Transit Administration (FTA) Grants") %>%
+  select(-topic, -subtopic) %>%
+  rename("topic" = "new_topic", "subtopic" = "new_subtopic")
 
 # filter out Chicago General Obligation Bond to use in most dashboard elements
 data <- data_all %>%
@@ -428,7 +429,7 @@ plot_funds_by_geo_topic <- function(data, fill_var) {
 
 ```{r chichunk, fig.width = 10, fig.height = 6, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Chicago showing largest allocation to community investment programs."}
 data_filter <- data %>%
-  filter(geography == "Chicago", !is.na(allocation)) %>%
+  filter(geography == "Chicago", !is.na(allocation)) %>% 
   select(legislation, program, topic, subtopic, allocation)
 
 
@@ -441,7 +442,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ```{r c2, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Cook County showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
-  filter(geography == "Cook County", !is.na(allocation)) %>%
+  filter(geography == "Cook County", !is.na(allocation)) %>% 
   select(legislation, program, topic, subtopic, allocation)
 
 
@@ -454,7 +455,7 @@ plot_funds_by_geo_topic(data_filter, "legislation")
 
 ```{r c3, fig.alt= "Bar chart of federal recovery allocations by legislation and policy topic for Illinois showing largest allocation to state and local discretionary funds, followed by housing programs."}
 data_filter <- data %>%
-  filter(geography == "Illinois", !is.na(allocation)) %>%
+  filter(geography == "Illinois", !is.na(allocation)) %>% 
   select(legislation, program, topic, subtopic, allocation)
 
 
@@ -633,36 +634,43 @@ ggplot(budget_gap_filter, aes(y = topic)) +
   )
 ```
 
-#### Cook County
 
-```{r, fig.width=10, fig.height=6}
-budget_gap_filter <- filter(budget_gap, geography == "Cook County")
-budget_gap_long_filter <- filter(budget_gap_long, geography == "Cook County")
+### Illinois
 
-ggplot(budget_gap_filter, aes(y = topic)) +
-  geom_dumbbell(aes(x = adopted_budget_per_treasury_report, xend = allocation),
-    dot_guide_size = 0.25, color = "darkgray", # Color of the line
-    size = 1, # Line width
-    dot_guide = FALSE, # Whether to add a guide from origin to X or not
-    size_x = 2, # Size of the X point
-    size_xend = 2, # Size of the X end point
-    color_x = "#387ECF", # Color of the X point
-    color_xend = "#FDBB30", # Color of the X end point
-    color = "#e3e2e1"
-  ) + # Color of the X end point
-  geom_point(data = budget_gap_long_filter, aes(x = value, color = name), size = 2) +
-  scale_color_manual(
-    name = "",
-    labels = c("Adopted Budget", "Allocation"),
-    values = c("#387ECF", "#FDBB30")
-  ) +
-  scale_x_continuous(labels = scales::label_currency(scale = 1 / 1e6)) +
-  facet_wrap(. ~ geography, nrow = 3) +
-  theme(legend.position = "bottom") +
-  labs(
-    x = "(Millions)",
-    y = NULL
-  )
+```{r fig.width = 10, fig.height = 6}
+data_filter <- data %>% 
+  filter(geography == "Illinois", !is.na(allocation),
+         legislation == "ARPA State and Local Fiscal Recovery Funds") %>%
+  select(legislation, program, topic, subtopic, allocation, total_cumulative_expenditures) 
+
+plot_difference_in_allocation_vs_spending(data_filter)
+```
+
+## Percent of obligated funds spent {.tabset .tabset-pills}
+
+```{r fig.width = 10}
+
+obligated_funds_by_geo <- function(geo){
+  
+  #cat("### ", geo, "\n")
+data_all %>%
+    filter(geography == {{geo}}) %>% 
+  mutate(pct_obligated_funds_spent = total_cumulative_expenditures / adopted_budget_per_treasury_report) %>% 
+  select(geography, legislation, topic, subtopic, pct_obligated_funds_spent) %>% 
+  mutate(pct_obligated_funds_spent = scales::percent(round(pct_obligated_funds_spent, 2))) %>% 
+  DT::datatable(width = "250px",
+                colnames = c("Jurisdiction" = "geography",
+                             "Legislation" = "legislation",
+                             "Topic" = "topic",
+                             "Subtopic" = "subtopic",
+                             "Percentage of obligated funds spent" = "pct_obligated_funds_spent"),
+                 options = list(dom = 't', 
+                               autoWidth = TRUE,
+                               ordering = FALSE, 
+                               columnDefs = list(list(width = '190px', targets = c(0)), 
+                                                 list(width = '60px', targets = c(1))))) %>%
+   DT::formatStyle(columns = c(1, 2), fontSize = '9pt')
+}
 ```
 
 #### Illinois
